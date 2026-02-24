@@ -23,3 +23,176 @@
 button, a, input, select {
   transition-property: background-color, border-color, color, box-shadow, transform;
 }
+
+/* ── Print styles ─────────────────────────────────────────────────────────── */
+.print-only {
+  /* Mantém no DOM para processar gráficos (hack) */
+  visibility: hidden;
+  height: 0;
+  width: 0;
+  overflow: hidden;
+  position: absolute;
+}
+
+/* Estilos para visualização em tela da página de impressão */
+body.print-slides .print-slide {
+  min-height: 100vh;
+  padding: 3rem 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  box-sizing: border-box;
+}
+
+body.print-slides .print-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: #f9fafb;
+  letter-spacing: -0.02em;
+  border-bottom: 1px solid #333;
+  padding-bottom: 0.5rem;
+}
+
+/* Garantir que gráficos sejam visíveis na tela */
+body.print-slides .recharts-responsive-container {
+  width: 100% !important;
+  min-height: 300px !important;
+}
+
+body.print-slides .recharts-wrapper {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+body.print-slides svg {
+  overflow: visible !important;
+}
+
+@media print {
+  html, body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    background: #0b0b0b !important;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  @page {
+    size: A4 landscape;
+    margin: 8mm;
+  }
+
+  body {
+    background: #0b0b0b !important;
+    color: #e5e7eb !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .print-hide {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+    visibility: visible !important;
+    height: auto !important;
+    width: auto !important;
+    position: static !important;
+    overflow: visible !important;
+  }
+
+  body.print-slides .print-slide {
+    page-break-after: always;
+    break-after: page;
+    width: 100vw;
+    min-height: 100vh; /* Permite crescer se o conteúdo for maior que a tela */
+    padding: 16mm 20mm;
+    background: #0b0b0b !important;
+    color: #e5e7eb !important;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    position: relative;
+    box-sizing: border-box;
+    /* justify-content: flex-start; padrão */
+  }
+
+  body.print-slides .print-title {
+    font-size: 22pt;
+    font-weight: 700;
+    margin-bottom: 4mm;
+    color: #f9fafb;
+    letter-spacing: -0.02em;
+    border-bottom: 1px solid #333;
+    padding-bottom: 2mm;
+  }
+
+  body.print-slides .print-slide:last-child {
+    page-break-after: auto;
+    break-after: auto;
+  }
+
+  body.print-slides .bg-neutral-900 {
+    background: #171717 !important; /* Neutral-900 (sem tom azulado) */
+    border: 1px solid #262626 !important; /* Neutral-800 */
+  }
+
+  body.print-slides .bg-neutral-950,
+  body.print-slides .bg-black {
+    background: #0a0a0a !important; /* Neutral-950/Black */
+  }
+
+  body.print-slides .border-neutral-800 {
+    border-color: #262626 !important;
+  }
+
+  body.print-slides .text-neutral-100,
+  body.print-slides .text-neutral-200,
+  body.print-slides .text-neutral-300,
+  body.print-slides .text-neutral-400,
+  body.print-slides .text-neutral-500 {
+    color: #dedede !important;
+  }
+  
+  /* Ajuste para garantir que gráficos apareçam */
+  body.print-slides .recharts-responsive-container {
+    width: 100% !important;
+    height: 300px !important; /* Altura fixa para garantir renderização */
+    min-height: 300px !important;
+  }
+
+  body.print-slides .recharts-wrapper {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  body.print-slides .recharts-surface,
+  body.print-slides svg {
+    overflow: visible !important;
+  }
+
+  body.print-slides .shadow-\[0_0_0_1px_rgba\(24\,24\,27\,0\.6\)\],
+  body.print-slides .shadow-xl {
+    box-shadow: none !important;
+  }
+
+  body.print-slides .p-5 {
+    padding: 12px !important;
+  }
+
+  body.print-slides .gap-6 {
+    gap: 12px !important;
+  }
+
+  body.print-slides .gap-4 {
+    gap: 10px !important;
+  }
+
+}

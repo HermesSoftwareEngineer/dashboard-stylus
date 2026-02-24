@@ -28,19 +28,20 @@ const CustomTooltip = ({ active, payload }) => {
   if (!active || !payload?.length) return null;
   const { name, value } = payload[0];
   return (
-    <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 shadow-xl text-xs">
-      <p className="font-semibold text-slate-700 dark:text-slate-300">{name}</p>
-      <p className="text-slate-600 dark:text-slate-400 mt-1">
-        Quantidade: <span className="font-bold text-slate-800 dark:text-slate-200">{formatNumber(value)}</span>
+    <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-3 shadow-xl text-xs">
+      <p className="font-semibold text-neutral-200">{name}</p>
+      <p className="text-neutral-400 mt-1">
+        Quantidade: <span className="font-bold text-neutral-100">{formatNumber(value)}</span>
       </p>
     </div>
   );
 };
 
-export default function RescissionChart({ data }) {
+export default function RescissionChart({ data, isPrint = false }) {
+  const isAnimationActive = !isPrint;
   if (!data?.length) {
     return (
-      <div className="flex items-center justify-center h-64 text-slate-400 dark:text-slate-500 text-sm">
+      <div className="flex items-center justify-center h-64 text-neutral-500 text-sm">
         Sem dados de garantias para o período
       </div>
     );
@@ -62,6 +63,7 @@ export default function RescissionChart({ data }) {
             innerRadius={40}
             dataKey="value"
             stroke="none"
+            isAnimationActive={isAnimationActive}
           >
             {data.map((_, index) => (
               <Cell key={index} fill={COLORS[index % COLORS.length]} />
@@ -85,11 +87,11 @@ export default function RescissionChart({ data }) {
                 className="w-2.5 h-2.5 rounded-full shrink-0"
                 style={{ background: COLORS[i % COLORS.length] }}
               />
-              <span className="text-slate-600 dark:text-slate-400">{item.name}</span>
+              <span className="text-neutral-400">{item.name}</span>
             </div>
             <div className="flex items-center gap-3">
-              <span className="font-semibold text-slate-800 dark:text-slate-200">{item.value}</span>
-              <span className="text-slate-400 dark:text-slate-500 w-10 text-right">
+              <span className="font-semibold text-neutral-100">{item.value}</span>
+              <span className="text-neutral-500 w-10 text-right">
                 {total > 0 ? `${((item.value / total) * 100).toFixed(1)}%` : '—'}
               </span>
             </div>

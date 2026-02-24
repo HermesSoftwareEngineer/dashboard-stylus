@@ -31,11 +31,33 @@ export function parseContractDate(value) {
 
   if (typeof value === 'string') {
     const trimmed = value.trim();
+    if (!trimmed) return null;
 
-    // dd/mm/yyyy
-    const dmy = trimmed.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    // dd/mm/yyyy ou dd/mm/yyyy HH:mm[:ss]
+    const dmy = trimmed.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+\d{2}:\d{2}(?::\d{2})?)?$/);
     if (dmy) {
       const d = new Date(`${dmy[3]}-${dmy[2]}-${dmy[1]}T00:00:00`);
+      return isNaN(d.getTime()) ? null : d;
+    }
+
+    // dd/mm/yy ou mm/dd/yy (com ou sem zero à esquerda)
+    const dmyShort = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2})(?:\s+\d{2}:\d{2}(?::\d{2})?)?$/);
+    if (dmyShort) {
+      const p1 = Number(dmyShort[1]);
+      const p2 = Number(dmyShort[2]);
+      const yy = Number(dmyShort[3]);
+      const year = yy >= 70 ? 1900 + yy : 2000 + yy;
+
+      let day = p1;
+      let month = p2;
+
+      if (p2 > 12 && p1 <= 12) {
+        // assume formato mm/dd/yy
+        day = p2;
+        month = p1;
+      }
+
+      const d = new Date(`${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T00:00:00`);
       return isNaN(d.getTime()) ? null : d;
     }
 
@@ -127,6 +149,18 @@ function getGuaranteeType(contract) {
   return raw.charAt(0).toUpperCase() + raw.slice(1);
 }
 
+/**
+ * Retorna a data de início mais confiável do contrato.
+ * Prioridade: DataInicio -> DataAtivacao -> DataInclusao.
+ */
+function getContractStartDate(contract) {
+  return (
+    parseContractDate(contract.DataInicio)
+    ?? parseContractDate(contract.DataAtivacao)
+    ?? parseContractDate(contract.DataInclusao)
+  );
+}
+
 // ─── KPIs ──────────────────────────────────────────────────────────────────────
 
 /**
@@ -153,14 +187,13 @@ export function computeKPIs(contracts, startDate, endDate) {
   const activeContracts = contracts.filter(isActiveContract);
   const vgvTotal = activeContracts.reduce((sum, c) => sum + parseValue(c.ValorAluguel), 0);
 
-  // Novos contratos no período
+  // Novos contratos no período (apenas ativos)
   const newContracts = contracts.filter((c) => {
-    const d = parseContractDate(c.DataInicio) ?? parseContractDate(c.DataInclusao);
-    return isInRange(d, startDate, endDate);
+    const d = getContractStartDate(c);
+    return isInRange(d, startDate, endDate) && isActiveContract(c);
   });
   const vgl = newContracts.reduce((sum, c) => sum + parseValue(c.ValorAluguel), 0);
-  const newWithValue = newContracts.filter((c) => parseValue(c.ValorAluguel) > 0);
-  const ticketMedio = newWithValue.length > 0 ? vgl / newWithValue.length : 0;
+  const ticketMedio = newContracts.length > 0 ? vgl / newContracts.length : 0;
 
   // Rescisões no período
   const rescissions = contracts.filter((c) => {
@@ -168,8 +201,7 @@ export function computeKPIs(contracts, startDate, endDate) {
     return isInRange(d, startDate, endDate);
   });
   const valorRescisoes = rescissions.reduce((sum, c) => sum + parseValue(c.ValorAluguel), 0);
-  const rescWithValue = rescissions.filter((c) => parseValue(c.ValorAluguel) > 0);
-  const ticketMedioRescisoes = rescWithValue.length > 0 ? valorRescisoes / rescWithValue.length : 0;
+  const ticketMedioRescisoes = rescissions.length > 0 ? valorRescisoes / rescissions.length : 0;
   const caucoesDev = rescissions.reduce((sum, c) => sum + parseValue(c.ValorGarantia), 0);
 
   // Churn financeiro = valor rescindido / VGV total * 100
@@ -240,7 +272,7 @@ export function computeMonthlyData(contracts, startDate, endDate) {
 
   contracts.forEach((c) => {
     // Novos contratos
-    const dataInicio = parseContractDate(c.DataInicio) ?? parseContractDate(c.DataInclusao);
+    const dataInicio = getContractStartDate(c);
     if (dataInicio && isInRange(dataInicio, startDate, endDate)) {
       const key = format(dataInicio, 'yyyy-MM');
       if (months[key]) {
@@ -277,7 +309,7 @@ export function computeGuaranteeData(contracts, startDate, endDate) {
   const counts = {};
 
   contracts.forEach((c) => {
-    const d = parseContractDate(c.DataInicio) ?? parseContractDate(c.DataInclusao);
+    const d = getContractStartDate(c);
     if (!isInRange(d, startDate, endDate)) return;
 
     const tipo = getGuaranteeType(c);

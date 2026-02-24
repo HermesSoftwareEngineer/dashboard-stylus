@@ -1,8 +1,9 @@
 import { useContracts } from '../context/ContractsContext';
 
 const PERIODS = [
-  { value: 'today', label: 'Hoje' },
-  { value: 'yesterday', label: 'Ontem' },
+  { value: 'all', label: 'Todo o período' },
+  { value: 'today', label: 'Este dia' },
+  { value: 'yesterday', label: 'Dia anterior' },
   { value: 'this_week', label: 'Esta semana' },
   { value: 'last_week', label: 'Semana anterior' },
   { value: 'this_month', label: 'Este mês' },
@@ -12,14 +13,13 @@ const PERIODS = [
   { value: 'this_year', label: 'Este ano' },
   { value: 'last_year', label: 'Ano anterior' },
   { value: 'custom', label: 'Personalizado' },
-  { value: 'all', label: 'Todos' },
 ];
 
-export default function Filters() {
-  const { filter, updateFilter } = useContracts();
+export default function ImoveisFilters() {
+  const { propertyFilter, updatePropertyFilter } = useContracts();
 
   const handlePeriod = (value) => {
-    updateFilter({ period: value, startDate: '', endDate: '' });
+    updatePropertyFilter({ period: value, startDate: '', endDate: '' });
   };
 
   return (
@@ -29,7 +29,7 @@ export default function Filters() {
           Seletor de período
         </label>
         <select
-          value={filter.period}
+          value={propertyFilter.period}
           onChange={(e) => handlePeriod(e.target.value)}
           className="px-3 py-2 text-xs rounded-lg border border-neutral-800 bg-neutral-950 text-neutral-100 focus:outline-none focus:ring-2 focus:ring-neutral-600"
         >
@@ -39,17 +39,17 @@ export default function Filters() {
             </option>
           ))}
         </select>
+
       </div>
 
-      {/* Inputs de data para período personalizado */}
-      {filter.period === 'custom' && (
+      {propertyFilter.period === 'custom' && (
         <div className="flex items-center gap-3 mt-3 flex-wrap">
           <label className="flex items-center gap-2 text-xs text-neutral-400">
             <span className="font-medium text-red-300">De:</span>
             <input
               type="date"
-              value={filter.startDate || ''}
-              onChange={(e) => updateFilter({ startDate: e.target.value })}
+              value={propertyFilter.startDate || ''}
+              onChange={(e) => updatePropertyFilter({ startDate: e.target.value })}
               className="px-2 py-1 text-xs rounded-lg border border-neutral-800 bg-neutral-950 text-neutral-100 focus:outline-none focus:ring-2 focus:ring-neutral-600"
             />
           </label>
@@ -57,8 +57,8 @@ export default function Filters() {
             <span className="font-medium text-red-300">Até:</span>
             <input
               type="date"
-              value={filter.endDate || ''}
-              onChange={(e) => updateFilter({ endDate: e.target.value })}
+              value={propertyFilter.endDate || ''}
+              onChange={(e) => updatePropertyFilter({ endDate: e.target.value })}
               className="px-2 py-1 text-xs rounded-lg border border-neutral-800 bg-neutral-950 text-neutral-100 focus:outline-none focus:ring-2 focus:ring-neutral-600"
             />
           </label>

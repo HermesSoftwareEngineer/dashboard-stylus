@@ -14,13 +14,13 @@ import { formatCurrency } from '../../utils/metrics';
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 shadow-xl text-xs">
-      <p className="font-semibold text-slate-700 dark:text-slate-300 mb-2">{label}</p>
+    <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-3 shadow-xl text-xs">
+      <p className="font-semibold text-neutral-200 mb-2">{label}</p>
       {payload.map((entry, i) => (
         <div key={i} className="flex items-center gap-2 mb-1">
           <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: entry.color }} />
-          <span className="text-slate-600 dark:text-slate-400">{entry.name}:</span>
-          <span className="font-semibold text-slate-800 dark:text-slate-200">
+          <span className="text-neutral-400">{entry.name}:</span>
+          <span className="font-semibold text-neutral-100">
             {formatCurrency(entry.value)}
           </span>
         </div>
@@ -32,10 +32,11 @@ const CustomTooltip = ({ active, payload, label }) => {
 const vglGradientId = 'vglGradient';
 const churnGradientId = 'churnGradient';
 
-export default function FinancialChart({ data }) {
+export default function FinancialChart({ data, isPrint = false }) {
+  const isAnimationActive = !isPrint;
   if (!data?.length) {
     return (
-      <div className="flex items-center justify-center h-64 text-slate-400 dark:text-slate-500 text-sm">
+      <div className="flex items-center justify-center h-64 text-neutral-500 text-sm">
         Sem dados para o período selecionado
       </div>
     );
@@ -50,8 +51,8 @@ export default function FinancialChart({ data }) {
             <stop offset="95%" stopColor="#14b8a6" stopOpacity={0.02} />
           </linearGradient>
           <linearGradient id={churnGradientId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#ef4444" stopOpacity={0.2} />
-            <stop offset="95%" stopColor="#ef4444" stopOpacity={0.02} />
+            <stop offset="5%" stopColor="#ef4444" stopOpacity={0.25} />
+            <stop offset="95%" stopColor="#ef4444" stopOpacity={0.05} />
           </linearGradient>
         </defs>
 
@@ -59,13 +60,13 @@ export default function FinancialChart({ data }) {
         <XAxis
           dataKey="month"
           tick={{ fontSize: 11, fill: 'currentColor' }}
-          className="text-slate-500 dark:text-slate-400"
+          className="text-neutral-500"
           axisLine={false}
           tickLine={false}
         />
         <YAxis
           tick={{ fontSize: 10, fill: 'currentColor' }}
-          className="text-slate-500 dark:text-slate-400"
+          className="text-neutral-500"
           axisLine={false}
           tickLine={false}
           tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`}
@@ -83,6 +84,7 @@ export default function FinancialChart({ data }) {
           fill={`url(#${vglGradientId})`}
           dot={{ r: 3, fill: '#14b8a6', strokeWidth: 0 }}
           activeDot={{ r: 5 }}
+          isAnimationActive={isAnimationActive}
         />
         <Area
           type="monotone"
@@ -93,6 +95,7 @@ export default function FinancialChart({ data }) {
           fill={`url(#${churnGradientId})`}
           dot={{ r: 3, fill: '#ef4444', strokeWidth: 0 }}
           activeDot={{ r: 5 }}
+          isAnimationActive={isAnimationActive}
         />
       </ComposedChart>
     </ResponsiveContainer>

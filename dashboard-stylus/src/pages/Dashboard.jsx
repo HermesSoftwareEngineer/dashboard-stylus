@@ -1,10 +1,14 @@
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useContracts } from '../context/ContractsContext';
 import { useContractsData } from '../hooks/useContractsData';
 import { parseExcelFile } from '../utils/parseExcel';
 import Filters from '../components/Filters';
+import ImoveisFilters from '../components/ImoveisFilters';
+import AtendimentosFilters from '../components/AtendimentosFilters';
 import DashboardCards from '../components/DashboardCards';
 import UploadExcel from '../components/UploadExcel';
+import ImoveisDashboard from '../components/ImoveisDashboard';
+import AtendimentosDashboard from '../components/AtendimentosDashboard';
 import ContractsChart from '../components/Charts/ContractsChart';
 import FinancialChart from '../components/Charts/FinancialChart';
 import RescissionChart from '../components/Charts/RescissionChart';
@@ -13,11 +17,11 @@ import RescissionChart from '../components/Charts/RescissionChart';
 
 function ChartCard({ title, subtitle, children }) {
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm">
+    <div className="bg-neutral-900 rounded-xl border border-neutral-800 p-5 shadow-[0_0_0_1px_rgba(24,24,27,0.6)]">
       <div className="mb-4">
-        <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">{title}</h3>
+        <h3 className="text-sm font-semibold text-neutral-100">{title}</h3>
         {subtitle && (
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{subtitle}</p>
+          <p className="text-xs text-neutral-400 mt-0.5">{subtitle}</p>
         )}
       </div>
       {children}
@@ -27,11 +31,22 @@ function ChartCard({ title, subtitle, children }) {
 
 // ─── Dashboard principal ───────────────────────────────────────────────────────
 
-export default function Dashboard({ isDark, onToggleDark }) {
-  const { contracts, setContracts } = useContracts();
+export default function Dashboard() {
+  const {
+    contracts,
+    setContracts,
+    propertiesRent,
+    propertiesSale,
+    atendimentosRent,
+    atendimentosSale,
+    saveDataToStorage
+  } = useContracts();
   const { kpis, monthlyData, guaranteeData } = useContractsData();
   const fileInputRef = useRef(null);
   const hasData = contracts.length > 0;
+  const [activeTab, setActiveTab] = useState('contratos');
+  const hasProperties = propertiesRent.length > 0 || propertiesSale.length > 0;
+  const hasAtendimentos = atendimentosRent.length > 0 || atendimentosSale.length > 0;
 
   const handleReimport = async (e) => {
     const file = e.target.files[0];
@@ -44,40 +59,82 @@ export default function Dashboard({ isDark, onToggleDark }) {
     }
   };
 
+  const handlePrint = () => {
+    document.body.classList.remove('print-slides');
+    // Força layout de impressão antes de chamar o dialog
+    window.print();
+  };
+
+  const handlePrintSlides = () => {
+    // 1. Salva estado atual para o localStorage
+    saveDataToStorage();
+
+    // 2. Abre nova janela que lerá esse estado e renderizará os slides
+    const width = 1200;
+    const height = 800;
+    const left = (window.screen.width - width) / 2;
+    const top = (window.screen.height - height) / 2;
+    
+    window.open(
+      `${window.location.origin}?view=print`, 
+      '_blank',
+      `width=${width},height=${height},top=${top},left=${left},resizable=yes,scrollbars=yes`
+    );
+  };
+
+  useEffect(() => {
+    const cleanup = () => document.body.classList.remove('print-slides');
+    window.addEventListener('afterprint', cleanup);
+    return () => window.removeEventListener('afterprint', cleanup);
+  }, []);
+
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors duration-200">
+    <div className="min-h-screen bg-neutral-950 text-neutral-100 transition-colors duration-200">
       {/* ── Navbar ────────────────────────────────────────────────── */}
-      <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-30">
-        <div className="flex items-center justify-between px-4 lg:px-6 h-14">
+      <header className="bg-black/90 border-b border-neutral-800 sticky top-0 z-30 backdrop-blur print-hide">
+        <div className="flex items-center justify-between px-4 lg:px-6 h-16">
           {/* Logo */}
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center shrink-0">
-              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-              </svg>
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 rounded-lg bg-red-600/20 border border-red-700/50 flex items-center justify-center">
+              <img src="/logo-stylus.jpg" alt="Stylus Imobiliária" className="h-6 w-6 object-contain" />
             </div>
             <div>
-              <span className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                Stylus
-              </span>
-              <span className="text-sm font-medium text-slate-500 dark:text-slate-400 ml-1">
-                Dashboard
-              </span>
+              <span className="text-sm font-bold text-neutral-100">Stylus</span>
+              <span className="text-sm font-medium text-red-400 ml-1">Imobiliária</span>
+              <span className="text-xs text-neutral-400 ml-2">Dashboard</span>
             </div>
           </div>
 
           {/* Ações */}
           <div className="flex items-center gap-2">
-            {hasData && (
+            <button
+              onClick={handlePrint}
+              className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border border-neutral-800 text-neutral-200 hover:bg-neutral-800/60 transition-colors"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 9V4h12v5M6 18h12v2H6v-2zm0-6h12v4H6v-4zm-2 0h2m12 0h2" />
+              </svg>
+              Imprimir
+            </button>
+            <button
+              onClick={handlePrintSlides}
+              className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border border-neutral-800 text-neutral-200 hover:bg-neutral-800/60 transition-colors"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 5h18M5 9h14M7 13h10M9 17h6" />
+              </svg>
+              Imprimir Slides
+            </button>
+            {activeTab === 'contratos' && hasData && (
               <>
-                <span className="hidden sm:inline-flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 rounded-full px-2.5 py-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="hidden sm:inline-flex items-center gap-1.5 text-xs text-neutral-300 bg-neutral-900 rounded-full px-2.5 py-1 border border-neutral-800">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
                   {contracts.length} contratos
                 </span>
 
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                  className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border border-neutral-800 text-neutral-200 hover:bg-neutral-800/60 transition-colors"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
@@ -94,130 +151,208 @@ export default function Dashboard({ isDark, onToggleDark }) {
               </>
             )}
 
-            {/* Dark mode toggle */}
-            <button
-              onClick={onToggleDark}
-              className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-              title={isDark ? 'Modo claro' : 'Modo escuro'}
-            >
-              {isDark ? (
-                <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
-                </svg>
-              ) : (
-                <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
-                </svg>
-              )}
-            </button>
           </div>
         </div>
       </header>
 
+      {/* ── Tabs ─────────────────────────────────────────────────── */}
+      <div className="px-4 lg:px-6 pt-4 print-hide">
+        <div className="inline-flex items-center gap-1.5 rounded-full bg-neutral-900 border border-neutral-800 p-1">
+          <button
+            onClick={() => setActiveTab('contratos')}
+            className={[
+              'px-4 py-1.5 text-xs font-semibold rounded-full transition-colors',
+              activeTab === 'contratos'
+                ? 'bg-red-600 text-white'
+                : 'text-neutral-300 hover:bg-neutral-800',
+            ].join(' ')}
+          >
+            Contratos
+          </button>
+          <button
+            onClick={() => setActiveTab('imoveis')}
+            className={[
+              'px-4 py-1.5 text-xs font-semibold rounded-full transition-colors',
+              activeTab === 'imoveis'
+                ? 'bg-red-600 text-white'
+                : 'text-neutral-300 hover:bg-neutral-800',
+            ].join(' ')}
+          >
+            Imóveis
+          </button>
+          <button
+            onClick={() => setActiveTab('atendimentos')}
+            className={[
+              'px-4 py-1.5 text-xs font-semibold rounded-full transition-colors',
+              activeTab === 'atendimentos'
+                ? 'bg-red-600 text-white'
+                : 'text-neutral-300 hover:bg-neutral-800',
+            ].join(' ')}
+          >
+            Atendimentos
+          </button>
+        </div>
+      </div>
+
       {/* ── Filtros (sticky, apenas com dados) ────────────────────── */}
-      {hasData && <Filters />}
+      <div className="print-hide">
+        {activeTab === 'contratos' && hasData && <Filters />}
+        {activeTab === 'imoveis' && <ImoveisFilters />}
+        {activeTab === 'atendimentos' && <AtendimentosFilters />}
+      </div>
 
       {/* ── Conteúdo ──────────────────────────────────────────────── */}
       <main className="px-4 lg:px-6 py-6 max-w-screen-2xl mx-auto">
-        {!hasData ? (
-          <UploadExcel />
-        ) : (
-          <div className="space-y-6">
-            {/* KPI Cards */}
-            <DashboardCards kpis={kpis} />
+        {activeTab === 'contratos' && (
+          !hasData ? (
+            <UploadExcel />
+          ) : (
+            <div className="space-y-6">
+              {/* KPI Cards */}
+              <DashboardCards kpis={kpis} />
 
-            {/* Gráficos — linha 1 */}
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-              <ChartCard
-                title="Produção Contratual"
-                subtitle="Novos contratos vs. Rescisões por mês"
-              >
-                <ContractsChart data={monthlyData} />
-              </ChartCard>
+              {/* Gráficos — linha 1 */}
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                <ChartCard
+                  title="Produção Contratual"
+                  subtitle="Novos contratos vs. Rescisões por mês"
+                >
+                  <ContractsChart data={monthlyData} />
+                </ChartCard>
 
-              <ChartCard
-                title="Evolução Financeira"
-                subtitle="VGL gerado vs. valor rescindido (R$)"
-              >
-                <FinancialChart data={monthlyData} />
-              </ChartCard>
+                <ChartCard
+                  title="Evolução Financeira"
+                  subtitle="VGL gerado vs. valor rescindido (R$)"
+                >
+                  <FinancialChart data={monthlyData} />
+                </ChartCard>
+              </div>
+
+              {/* Gráfico pizza de garantias */}
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                <ChartCard
+                  title="Garantias Utilizadas"
+                  subtitle="Distribuição dos tipos de garantia nos novos contratos"
+                >
+                  <RescissionChart data={guaranteeData} />
+                </ChartCard>
+
+                {/* Resumo Rescisões */}
+                <ChartCard
+                  title="Resumo de Rescisões"
+                  subtitle="Indicadores do período selecionado"
+                >
+                  <div className="space-y-3 pt-1">
+                    {[
+                      { label: 'Contratos rescindidos', value: kpis.rescisoes, type: 'number' },
+                      { label: 'Valor total rescindido', value: kpis.valorRescisoes, type: 'currency' },
+                      { label: 'Ticket médio rescisão', value: kpis.ticketMedioRescisoes, type: 'currency' },
+                      { label: 'Cauções devolvidas', value: kpis.caucoesDev, type: 'currency' },
+                      { label: 'Churn financeiro', value: kpis.churn, type: 'percent' },
+                    ].map((row) => (
+                      <div
+                        key={row.label}
+                        className="flex items-center justify-between py-2 border-b border-neutral-800/70 last:border-0"
+                      >
+                        <span className="text-sm text-neutral-400">{row.label}</span>
+                        <span className={`text-sm font-semibold ${
+                          row.type === 'percent' && kpis.churn > 5
+                            ? 'text-red-400'
+                            : 'text-neutral-100'
+                        }`}>
+                          {row.type === 'currency'
+                            ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(row.value)
+                            : row.type === 'percent'
+                            ? `${row.value.toFixed(2)}%`
+                            : new Intl.NumberFormat('pt-BR').format(row.value)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </ChartCard>
+
+                {/* Resumo Produção */}
+                <ChartCard
+                  title="Resumo de Produção"
+                  subtitle="Indicadores do período selecionado"
+                >
+                  <div className="space-y-3 pt-1">
+                    {[
+                      { label: 'Novos contratos', value: kpis.novosContratos, type: 'number' },
+                      { label: 'VGL gerado', value: kpis.vgl, type: 'currency' },
+                      { label: 'Ticket médio (novos)', value: kpis.ticketMedio, type: 'currency' },
+                      { label: 'Caução', value: `${kpis.caucao} (${kpis.caucaoPercent.toFixed(1)}%)`, type: 'text' },
+                      { label: 'Seguro Fiança', value: `${kpis.seguroFianca} (${kpis.seguroFiancaPercent.toFixed(1)}%)`, type: 'text' },
+                    ].map((row) => (
+                      <div
+                        key={row.label}
+                        className="flex items-center justify-between py-2 border-b border-neutral-800/70 last:border-0"
+                      >
+                        <span className="text-sm text-neutral-400">{row.label}</span>
+                        <span className="text-sm font-semibold text-neutral-100">
+                          {row.type === 'currency'
+                            ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(row.value)
+                            : row.type === 'number'
+                            ? new Intl.NumberFormat('pt-BR').format(row.value)
+                            : row.value}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </ChartCard>
+              </div>
             </div>
-
-            {/* Gráfico pizza de garantias */}
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-              <ChartCard
-                title="Garantias Utilizadas"
-                subtitle="Distribuição dos tipos de garantia nos novos contratos"
-              >
-                <RescissionChart data={guaranteeData} />
-              </ChartCard>
-
-              {/* Resumo Rescisões */}
-              <ChartCard
-                title="Resumo de Rescisões"
-                subtitle="Indicadores do período selecionado"
-              >
-                <div className="space-y-3 pt-1">
-                  {[
-                    { label: 'Contratos rescindidos', value: kpis.rescisoes, type: 'number' },
-                    { label: 'Valor total rescindido', value: kpis.valorRescisoes, type: 'currency' },
-                    { label: 'Ticket médio rescisão', value: kpis.ticketMedioRescisoes, type: 'currency' },
-                    { label: 'Cauções devolvidas', value: kpis.caucoesDev, type: 'currency' },
-                    { label: 'Churn financeiro', value: kpis.churn, type: 'percent' },
-                  ].map((row) => (
-                    <div
-                      key={row.label}
-                      className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-700 last:border-0"
-                    >
-                      <span className="text-sm text-slate-600 dark:text-slate-400">{row.label}</span>
-                      <span className={`text-sm font-semibold ${
-                        row.type === 'percent' && kpis.churn > 5
-                          ? 'text-red-600 dark:text-red-400'
-                          : 'text-slate-800 dark:text-slate-200'
-                      }`}>
-                        {row.type === 'currency'
-                          ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(row.value)
-                          : row.type === 'percent'
-                          ? `${row.value.toFixed(2)}%`
-                          : new Intl.NumberFormat('pt-BR').format(row.value)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </ChartCard>
-
-              {/* Resumo Produção */}
-              <ChartCard
-                title="Resumo de Produção"
-                subtitle="Indicadores do período selecionado"
-              >
-                <div className="space-y-3 pt-1">
-                  {[
-                    { label: 'Novos contratos', value: kpis.novosContratos, type: 'number' },
-                    { label: 'VGL gerado', value: kpis.vgl, type: 'currency' },
-                    { label: 'Ticket médio (novos)', value: kpis.ticketMedio, type: 'currency' },
-                    { label: 'Caução', value: `${kpis.caucao} (${kpis.caucaoPercent.toFixed(1)}%)`, type: 'text' },
-                    { label: 'Seguro Fiança', value: `${kpis.seguroFianca} (${kpis.seguroFiancaPercent.toFixed(1)}%)`, type: 'text' },
-                  ].map((row) => (
-                    <div
-                      key={row.label}
-                      className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-700 last:border-0"
-                    >
-                      <span className="text-sm text-slate-600 dark:text-slate-400">{row.label}</span>
-                      <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-                        {row.type === 'currency'
-                          ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(row.value)
-                          : row.type === 'number'
-                          ? new Intl.NumberFormat('pt-BR').format(row.value)
-                          : row.value}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </ChartCard>
-            </div>
-          </div>
+          )
         )}
+
+        {activeTab === 'imoveis' && <ImoveisDashboard />}
+
+        {activeTab === 'atendimentos' && <AtendimentosDashboard />}
+
+        {/* ── Print slides (todos os relatórios) ─────────────────── */}
+        <div className="print-only">
+          <section className="print-slide">
+            <div className="print-title">Relatório de Contratos</div>
+            {hasData ? (
+              <div className="space-y-6">
+                <DashboardCards kpis={kpis} />
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                  <ChartCard title="Produção Contratual" subtitle="Novos contratos vs. Rescisões por mês">
+                    <ContractsChart data={monthlyData} />
+                  </ChartCard>
+                  <ChartCard title="Evolução Financeira" subtitle="VGL gerado vs. valor rescindido (R$)">
+                    <FinancialChart data={monthlyData} />
+                  </ChartCard>
+                </div>
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                  <ChartCard title="Garantias Utilizadas" subtitle="Distribuição dos tipos de garantia nos novos contratos">
+                    <RescissionChart data={guaranteeData} />
+                  </ChartCard>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-neutral-500">Sem dados de contratos.</p>
+            )}
+          </section>
+
+          <section className="print-slide">
+            <div className="print-title">Relatório de Imóveis</div>
+            {hasProperties ? (
+              <ImoveisDashboard />
+            ) : (
+              <p className="text-sm text-neutral-500">Sem dados de imóveis.</p>
+            )}
+          </section>
+
+          <section className="print-slide">
+            <div className="print-title">Relatório de Atendimentos</div>
+            {hasAtendimentos ? (
+              <AtendimentosDashboard />
+            ) : (
+              <p className="text-sm text-neutral-500">Sem dados de atendimentos.</p>
+            )}
+          </section>
+        </div>
       </main>
     </div>
   );
