@@ -15,6 +15,13 @@ const PERIODS = [
   { value: 'all', label: 'Todos' },
 ];
 
+const GRANULARITIES = [
+  { value: 'auto', label: 'Automático' },
+  { value: 'daily', label: 'Diário' },
+  { value: 'weekly', label: 'Semanal' },
+  { value: 'monthly', label: 'Mensal' },
+];
+
 export default function Filters() {
   const { filter, updateFilter } = useContracts();
 
@@ -36,6 +43,21 @@ export default function Filters() {
           {PERIODS.map((p) => (
             <option key={p.value} value={p.value}>
               {p.label}
+            </option>
+          ))}
+        </select>
+
+        <label className="text-xs uppercase tracking-wide text-neutral-400 font-semibold ml-4">
+          Granularidade
+        </label>
+        <select
+          value={filter.granularity || 'auto'}
+          onChange={(e) => updateFilter({ granularity: e.target.value })}
+          className="px-3 py-2 text-xs rounded-lg border border-neutral-800 bg-neutral-950 text-neutral-100 focus:outline-none focus:ring-2 focus:ring-neutral-600"
+        >
+          {GRANULARITIES.map((g) => (
+            <option key={g.value} value={g.value}>
+              {g.label}
             </option>
           ))}
         </select>

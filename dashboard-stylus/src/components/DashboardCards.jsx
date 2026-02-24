@@ -171,21 +171,28 @@ export default function DashboardCards({ kpis }) {
 
       {/* Linha 2 — Garantias e métricas secundárias */}
       <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-4">
-        <GuaranteeCard
-          title="Caução"
-          count={kpis.caucao}
-          percent={kpis.caucaoPercent}
-          value={kpis.caucaoValue}
-          accent="blue"
-          icon="🔒"
+        <KpiCard
+          accent={kpis.saldoCaucoes >= 0 ? "green" : "red"}
+          title="Saldo de Cauções"
+          value={formatCurrency(kpis.saldoCaucoes)}
+          sub={`Recebidas - Devolvidas`}
+          icon={
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          }
         />
-        <GuaranteeCard
-          title="Seguro Fiança"
-          count={kpis.seguroFianca}
-          percent={kpis.seguroFiancaPercent}
-          value={0}
-          accent="purple"
-          icon="🛡️"
+
+        <KpiCard
+          accent="green"
+          title="Cauções Recebidas"
+          value={formatCurrency(kpis.caucoesRecebidas)}
+          sub={`${formatNumber(kpis.novosContratos)} novos`}
+          icon={
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 15l6-6m0 0l-6-6m6 6H9a6 6 0 000 12h3" />
+            </svg>
+          }
         />
 
         <KpiCard

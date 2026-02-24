@@ -6,6 +6,7 @@ const defaultFilter = {
   period: 'this_month',
   startDate: '',
   endDate: '',
+  granularity: 'auto',
 };
 
 const defaultPropertyFilter = {
@@ -70,28 +71,43 @@ export function ContractsProvider({ children }) {
 
   const loadDataFromStorage = () => {
     let data = null;
+    let source = '';
 
     // 1. Tenta recuperar via window.opener (se disponível)
-    if (window.opener && window.opener.dashboardPrintData) {
-      data = window.opener.dashboardPrintData;
-      console.log('Dados carregados via window.opener');
+    try {
+      if (window.opener && window.opener.dashboardPrintData) {
+        data = window.opener.dashboardPrintData;
+        source = 'window.opener';
+        console.log('✓ Dados carregados via window.opener');
+      }
+    } catch (err) {
+      console.warn('window.opener indisponível:', err.message);
     }
 
-    // 2. Se falhar, tenta localStorage
+    // 2. Se falhar, tenta localStorage - FORÇA LEITURA
     if (!data) {
       try {
         const raw = localStorage.getItem('dashboard:print-data');
         if (raw) {
           data = JSON.parse(raw);
-          console.log('Dados carregados via localStorage');
+          source = 'localStorage';
+          console.log('✓ Dados carregados via localStorage. Tamanho:', Object.keys(data).length);
+        } else {
+          console.warn('localStorage vazio - nenhum dado salvo');
+          // Log todas as chaves do localStorage para debug
+          console.log('Chaves do localStorage:', Object.keys(localStorage));
         }
       } catch (err) {
-        console.error('Erro ao carregar dados:', err);
+        console.error('✗ Erro ao carregar dados do localStorage:', err);
       }
     }
 
     if (data) {
-      if (data.contracts) setContracts(data.contracts);
+      console.log('Carregando dados de:', source);
+      if (data.contracts) {
+        setContracts(data.contracts);
+        console.log(`  - Contratos: ${data.contracts.length}`);
+      }
       if (data.propertiesRent) setPropertiesRent(data.propertiesRent);
       if (data.propertiesSale) setPropertiesSale(data.propertiesSale);
       if (data.atendimentosRent) setAtendimentosRent(data.atendimentosRent);

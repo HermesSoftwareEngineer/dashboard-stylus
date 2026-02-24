@@ -95,11 +95,28 @@ function isInRange(date, startDate, endDate) {
 
 /**
  * Verifica se um contrato está ativo.
- * Critério: não possui DataRescisao preenchida.
+ * Critérios:
+ * - Não possui DataRescisao preenchida
+ * - Situacao = "Ativo" (não pode ser "Cancelado", "Rescindido" ou "Moderação")
  * DataFim é ignorada intencionalmente.
  */
 function isActiveContract(contract) {
-  return !parseContractDate(contract.DataRescisao);
+  // Verifica se há data de rescisão
+  if (parseContractDate(contract.DataRescisao)) return false;
+  
+  // Verifica a situação do contrato
+  const situacao = String(contract.Situacao || contract.Situação || '').toLowerCase().trim();
+  
+  // Se não tem situação definida, verifica apenas pela ausência de DataRescisao
+  if (!situacao) return true;
+  
+  // Normaliza removendo acentos
+  const situacaoNormalized = situacao
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+  
+  // Considera ativo apenas se a situação for explicitamente "Ativo"
+  return situacaoNormalized === 'ativo';
 }
 
 /**
@@ -177,7 +194,7 @@ export function computeKPIs(contracts, startDate, endDate) {
       vgvTotal: 0, totalAtivos: 0,
       novosContratos: 0, vgl: 0, ticketMedio: 0,
       rescisoes: 0, valorRescisoes: 0, ticketMedioRescisoes: 0,
-      churn: 0, caucoesDev: 0,
+      churn: 0, caucoesDev: 0, caucoesRecebidas: 0, saldoCaucoes: 0,
       caucao: 0, caucaoPercent: 0, caucaoValue: 0,
       seguroFianca: 0, seguroFiancaPercent: 0,
     };
@@ -202,7 +219,17 @@ export function computeKPIs(contracts, startDate, endDate) {
   });
   const valorRescisoes = rescissions.reduce((sum, c) => sum + parseValue(c.ValorAluguel), 0);
   const ticketMedioRescisoes = rescissions.length > 0 ? valorRescisoes / rescissions.length : 0;
-  const caucoesDev = rescissions.reduce((sum, c) => sum + parseValue(c.ValorGarantia), 0);
+  
+  // Cauções devolvidas (apenas contratos com Situacao = 'Rescindido')
+  const rescindidos = rescissions.filter((c) => {
+    const situacao = String(c.Situacao || c.Situação || '').toLowerCase().trim();
+    const situacaoNormalized = situacao.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    return situacaoNormalized === 'rescindido';
+  });
+  const caucoesDev = rescindidos.reduce((sum, c) => sum + parseValue(c.ValorGarantia), 0);
+  
+  // Cauções recebidas (valor da garantia dos novos contratos ativos)
+  const caucoesRecebidas = newContracts.reduce((sum, c) => sum + parseValue(c.ValorGarantia), 0);
 
   // Churn financeiro = valor rescindido / VGV total * 100
   const churn = vgvTotal > 0 ? (valorRescisoes / vgvTotal) * 100 : 0;
@@ -223,6 +250,8 @@ export function computeKPIs(contracts, startDate, endDate) {
     ticketMedioRescisoes,
     churn,
     caucoesDev,
+    caucoesRecebidas,
+    saldoCaucoes: caucoesRecebidas - caucoesDev,
     caucao: caucaoContracts.length,
     caucaoPercent: newContracts.length > 0 ? (caucaoContracts.length / newContracts.length) * 100 : 0,
     caucaoValue,
@@ -235,64 +264,136 @@ export function computeKPIs(contracts, startDate, endDate) {
 // ─── Dados mensais para gráficos ───────────────────────────────────────────────
 
 /**
- * Agrupa contratos por mês dentro do período para os gráficos de evolução.
- * Se o período for "tudo" (sem datas), exibe os últimos 12 meses.
+ * Determina a granularidade ideal baseada no período.
+ * - Até 45 dias: diária
+ * - 46 a 180 dias: semanal
+ * - Mais de 180 dias: mensal
+ */
+function getGranularity(startDate, endDate) {
+  const diffMs = endDate - startDate;
+  const diffDays = diffMs / (1000 * 60 * 60 * 24);
+  
+  if (diffDays <= 45) return 'daily';
+  if (diffDays <= 180) return 'weekly';
+  return 'monthly';
+}
+
+/**
+ * Agrupa contratos por período (dia, semana ou mês) dentro do intervalo para os gráficos de evolução.
+ * A granularidade é determinada automaticamente baseada no tamanho do período ou pode ser forçada.
  *
  * @param {Object[]} contracts
  * @param {Date|null} startDate
  * @param {Date|null} endDate
- * @returns {Object[]} Array com dados mensais { month, novos, rescisoes, vgl, churnValor }
+ * @param {string} forcedGranularity - 'auto', 'daily', 'weekly' ou 'monthly'
+ * @returns {Object[]} Array com dados { month, novos, rescisoes, vgl, churnValor }
  */
-export function computeMonthlyData(contracts, startDate, endDate) {
+export function computeMonthlyData(contracts, startDate, endDate, forcedGranularity = 'auto') {
   const now = new Date();
   const effectiveStart = startDate ?? new Date(now.getFullYear() - 1, now.getMonth() + 1, 1);
   const effectiveEnd = endDate ?? now;
 
-  // Monta estrutura de meses no intervalo
-  const months = {};
-  let cursor = new Date(effectiveStart.getFullYear(), effectiveStart.getMonth(), 1);
+  const granularity = forcedGranularity === 'auto' 
+    ? getGranularity(effectiveStart, effectiveEnd)
+    : forcedGranularity;
+  const periods = {};
 
-  while (cursor <= effectiveEnd) {
-    const key = format(cursor, 'yyyy-MM');
-    months[key] = {
-      month: format(cursor, 'MMM/yy', { locale: ptBR }),
-      novos: 0,
-      rescisoes: 0,
-      vgl: 0,
-      churnValor: 0,
-    };
-    cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
+  // Monta estrutura de períodos no intervalo
+  if (granularity === 'daily') {
+    let cursor = new Date(effectiveStart);
+    cursor.setHours(0, 0, 0, 0);
+    
+    while (cursor <= effectiveEnd) {
+      const key = format(cursor, 'yyyy-MM-dd');
+      periods[key] = {
+        month: format(cursor, 'dd/MM', { locale: ptBR }),
+        novos: 0,
+        rescisoes: 0,
+        vgl: 0,
+        churnValor: 0,
+      };
+      cursor = new Date(cursor.getTime() + 24 * 60 * 60 * 1000);
+    }
+  } else if (granularity === 'weekly') {
+    let cursor = new Date(effectiveStart);
+    cursor.setHours(0, 0, 0, 0);
+    // Ajusta para o início da semana (domingo)
+    const day = cursor.getDay();
+    cursor = new Date(cursor.getTime() - day * 24 * 60 * 60 * 1000);
+    
+    while (cursor <= effectiveEnd) {
+      const key = format(cursor, 'yyyy-\'W\'ww');
+      const endOfWeek = new Date(cursor.getTime() + 6 * 24 * 60 * 60 * 1000);
+      periods[key] = {
+        month: format(cursor, 'dd/MM', { locale: ptBR }) + ' - ' + format(endOfWeek, 'dd/MM', { locale: ptBR }),
+        novos: 0,
+        rescisoes: 0,
+        vgl: 0,
+        churnValor: 0,
+      };
+      cursor = new Date(cursor.getTime() + 7 * 24 * 60 * 60 * 1000);
+    }
+  } else {
+    // monthly
+    let cursor = new Date(effectiveStart.getFullYear(), effectiveStart.getMonth(), 1);
+    
+    while (cursor <= effectiveEnd) {
+      const key = format(cursor, 'yyyy-MM');
+      periods[key] = {
+        month: format(cursor, 'MMM/yy', { locale: ptBR }),
+        novos: 0,
+        rescisoes: 0,
+        vgl: 0,
+        churnValor: 0,
+      };
+      cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
+    }
   }
 
-  // Garante ao menos um mês
-  if (Object.keys(months).length === 0) {
+  // Garante ao menos um período
+  if (Object.keys(periods).length === 0) {
     const key = format(now, 'yyyy-MM');
-    months[key] = { month: format(now, 'MMM/yy', { locale: ptBR }), novos: 0, rescisoes: 0, vgl: 0, churnValor: 0 };
+    periods[key] = { month: format(now, 'MMM/yy', { locale: ptBR }), novos: 0, rescisoes: 0, vgl: 0, churnValor: 0 };
   }
+
+  // Função auxiliar para gerar chave baseada na granularidade
+  const getKey = (date) => {
+    if (granularity === 'daily') {
+      return format(date, 'yyyy-MM-dd');
+    } else if (granularity === 'weekly') {
+      const d = new Date(date);
+      d.setHours(0, 0, 0, 0);
+      const day = d.getDay();
+      const weekStart = new Date(d.getTime() - day * 24 * 60 * 60 * 1000);
+      return format(weekStart, 'yyyy-\'W\'ww');
+    } else {
+      return format(date, 'yyyy-MM');
+    }
+  };
 
   contracts.forEach((c) => {
-    // Novos contratos
+    // Novos contratos (apenas ativos)
     const dataInicio = getContractStartDate(c);
-    if (dataInicio && isInRange(dataInicio, startDate, endDate)) {
-      const key = format(dataInicio, 'yyyy-MM');
-      if (months[key]) {
-        months[key].novos += 1;
-        months[key].vgl += parseValue(c.ValorAluguel);
+    if (dataInicio && isInRange(dataInicio, startDate, endDate) && isActiveContract(c)) {
+      const key = getKey(dataInicio);
+      if (periods[key]) {
+        periods[key].novos += 1;
+        periods[key].vgl += parseValue(c.ValorAluguel);
       }
     }
 
     // Rescisões
     const dataRescisao = parseContractDate(c.DataRescisao);
     if (dataRescisao && isInRange(dataRescisao, startDate, endDate)) {
-      const key = format(dataRescisao, 'yyyy-MM');
-      if (months[key]) {
-        months[key].rescisoes += 1;
-        months[key].churnValor += parseValue(c.ValorAluguel);
+      const key = getKey(dataRescisao);
+      if (periods[key]) {
+        periods[key].rescisoes += 1;
+        periods[key].churnValor += parseValue(c.ValorAluguel);
       }
     }
   });
 
-  return Object.values(months);
+  return Object.values(periods);
 }
 
 // ─── Dados de garantias para gráfico pizza ─────────────────────────────────────
@@ -311,6 +412,7 @@ export function computeGuaranteeData(contracts, startDate, endDate) {
   contracts.forEach((c) => {
     const d = getContractStartDate(c);
     if (!isInRange(d, startDate, endDate)) return;
+    if (!isActiveContract(c)) return;
 
     const tipo = getGuaranteeType(c);
     counts[tipo] = (counts[tipo] || 0) + 1;

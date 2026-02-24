@@ -62,6 +62,10 @@ const FIELD_MAP = {
     'TipoGarantia', 'Tipo Garantia', 'TipoDeGarantia', 'Tipo de Garantia',
     'Modalidade Garantia', 'Modalidade',
   ],
+  Status: [
+    'Status', 'StatusContrato', 'Status Contrato', 'Status do Contrato',
+    'Situacao', 'Situação', 'SituacaoContrato', 'Situação Contrato',
+  ],
 };
 
 /**

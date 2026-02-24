@@ -54,19 +54,94 @@ body.print-slides .print-title {
   padding-bottom: 0.5rem;
 }
 
+/* ChartCard container deve ter altura fixa */
+body.print-slides .bg-neutral-900 {
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+}
+
 /* Garantir que gráficos sejam visíveis na tela */
 body.print-slides .recharts-responsive-container {
   width: 100% !important;
+  height: 300px !important;
   min-height: 300px !important;
+  display: block !important;
+  background: transparent !important;
+  flex: 1;
 }
 
 body.print-slides .recharts-wrapper {
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+}
+
+body.print-slides .recharts-surface {
   width: 100% !important;
   height: 100% !important;
 }
 
 body.print-slides svg {
   overflow: visible !important;
+  background: transparent !important;
+}
+
+/* ─── Estilos para PrintView (sem triggerar print automático) ─── */
+.print-view {
+  background: #0b0b0b;
+  color: #e5e7eb;
+  min-height: 100vh;
+}
+
+.print-view .print-slide {
+  min-height: 100vh;
+  padding: 3rem 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  box-sizing: border-box;
+  page-break-after: always;
+  break-after: page;
+}
+
+.print-view .print-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: #f9fafb;
+  letter-spacing: -0.02em;
+  border-bottom: 1px solid #333;
+  padding-bottom: 0.5rem;
+}
+
+.print-view .bg-neutral-900 {
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+  background: #171717 !important;
+  border: 1px solid #262626 !important;
+}
+
+.print-view .recharts-responsive-container {
+  width: 100% !important;
+  height: 300px !important;
+  min-height: 300px !important;
+  display: block !important;
+  background: transparent !important;
+  flex: 1;
+}
+
+.print-view .recharts-wrapper {
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+}
+
+.print-view .recharts-surface,
+.print-view svg {
+  overflow: visible !important;
+  background: transparent !important;
 }
 
 @media print {

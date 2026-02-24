@@ -247,6 +247,7 @@ export default function Dashboard() {
                       { label: 'Contratos rescindidos', value: kpis.rescisoes, type: 'number' },
                       { label: 'Valor total rescindido', value: kpis.valorRescisoes, type: 'currency' },
                       { label: 'Ticket médio rescisão', value: kpis.ticketMedioRescisoes, type: 'currency' },
+                      { label: 'Cauções recebidas', value: kpis.caucoesRecebidas, type: 'currency' },
                       { label: 'Cauções devolvidas', value: kpis.caucoesDev, type: 'currency' },
                       { label: 'Churn financeiro', value: kpis.churn, type: 'percent' },
                     ].map((row) => (

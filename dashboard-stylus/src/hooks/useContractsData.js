@@ -18,8 +18,8 @@ export function useContractsData() {
   );
 
   const monthlyData = useMemo(
-    () => computeMonthlyData(contracts, startDate, endDate),
-    [contracts, startDate, endDate]
+    () => computeMonthlyData(contracts, startDate, endDate, filter.granularity || 'auto'),
+    [contracts, startDate, endDate, filter.granularity]
   );
 
   const guaranteeData = useMemo(

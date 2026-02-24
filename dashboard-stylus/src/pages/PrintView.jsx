@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useContracts } from '../context/ContractsContext';
 import { useContractsData } from '../hooks/useContractsData';
+import { getDateRange } from '../utils/dateRange';
+import { computeKPIs, computeMonthlyData, computeGuaranteeData } from '../utils/metrics';
 import ImoveisDashboard from '../components/ImoveisDashboard';
 import AtendimentosDashboard from '../components/AtendimentosDashboard';
 import ContractsChart from '../components/Charts/ContractsChart';
@@ -29,61 +31,96 @@ export default function PrintView() {
     propertiesRent,
     propertiesSale,
     atendimentosRent,
-    atendimentosSale
+    atendimentosSale,
+    filter
   } = useContracts();
 
-  const { kpis, monthlyData, guaranteeData } = useContractsData();
   const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    // 1. Aplica classe no body imediatamente
-    document.body.classList.add('print-slides');
-    
-    // 2. Carrega dados
-    const success = loadDataFromStorage();
-    if (!success) {
-      console.warn('Falha ao carregar dados iniciais. Tentando novamente em 500ms...');
-      setTimeout(loadDataFromStorage, 500);
-    }
-    
-    // 3. Aguarda renderização dos gráficos (Recharts precisa de tempo para calcular dimensões)
-    const timer = setTimeout(() => {
-      setLoaded(true);
-
-      // 4. Mais um delay para garantir que o DOM final esteja estável antes de imprimir
-      setTimeout(() => {
-        window.print();
-      }, 3000); 
-      
-    }, 1500);
-
-    return () => {
-      clearTimeout(timer);
-      document.body.classList.remove('print-slides');
-    };
-  }, []); // Run once on mount
-
+  
   const hasData = contracts?.length > 0;
   const hasProperties = propertiesRent?.length > 0 || propertiesSale?.length > 0;
   const hasAtendimentos = atendimentosRent?.length > 0 || atendimentosSale?.length > 0;
+
+  // Calcula dados diretamente (sem hook) para garantir que está sincronizado
+  const { startDate, endDate } = useMemo(() => getDateRange(filter), [filter]);
+  const kpis = useMemo(() => computeKPIs(contracts, startDate, endDate), [contracts, startDate, endDate]);
+  const monthlyData = useMemo(() => computeMonthlyData(contracts, startDate, endDate, filter.granularity || 'auto'), [contracts, startDate, endDate, filter.granularity]);
+  const guaranteeData = useMemo(() => computeGuaranteeData(contracts, startDate, endDate), [contracts, startDate, endDate]);
+
+  useEffect(() => {
+    // Não adiciona classe que possa triggerar print automático
+    console.log('=== PrintView Inicializado ===');
+    console.log('window.opener disponível?', !!window.opener);
+    
+    // 2. Tenta carregar dados IMEDIATAMENTE
+    let success = loadDataFromStorage();
+    console.log('Primeira tentativa:', success ? '✓' : '✗');
+    
+    // 3. Se falhou, tenta novamente com delays
+    let retries = 0;
+    const maxRetries = 3;
+    const retryInterval = setInterval(() => {
+      retries++;
+      if (retries > maxRetries) {
+        clearInterval(retryInterval);
+        console.error('✗ Falha em carregar dados após', maxRetries, 'tentativas');
+        setLoaded(true); // Renderiza mesmo sem dados para mostrar mensagem
+        return;
+      }
+      
+      console.log(`Tentativa ${retries} de ${maxRetries}...`);
+      success = loadDataFromStorage();
+      if (success) {
+        console.log(`✓ Dados carregados na tentativa ${retries}`);
+        clearInterval(retryInterval);
+      }
+    }, 300);
+
+    // 4. Renderiza após um delay para garantir que estado foi propagado
+    const renderTimer = setTimeout(() => {
+      console.log('Renderizando. Estado atual:', {
+        contracts: contracts?.length ?? 0,
+        monthlyData: monthlyData?.length ?? 0,
+        guaranteeData: guaranteeData?.length ?? 0,
+        hasData
+      });
+      setLoaded(true);
+    }, 1000);
+
+    return () => {
+      clearInterval(retryInterval);
+      clearTimeout(renderTimer);
+    };
+  }, []); // Run only once on mount
+
+  useEffect(() => {
+    // Quando dados mudarem, log para debug
+    if (hasData) {
+      console.log('Dados atualizados no contexto:', {
+        contracts: contracts?.length,
+        monthlyData: monthlyData?.length,
+        guaranteeData: guaranteeData?.length
+      });
+    }
+  }, [hasData, contracts?.length, monthlyData?.length, guaranteeData?.length]);
 
   if (!loaded) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-neutral-950 text-neutral-100">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-500 mb-4"></div>
-        <p>Prepare-se, gerando slides para impressão...</p>
+        <p>Carregando dados...</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-neutral-950 min-h-screen">
+    <div className="print-view bg-neutral-950 min-h-screen">
       <section className="print-slide">
         <div className="print-title">Relatório de Contratos</div>
         {hasData ? (
           <div className="space-y-6">
             <DashboardCards kpis={kpis} />
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-6">
               <ChartCard title="Produção Contratual" subtitle="Novos contratos vs. Rescisões por mês">
                 <ContractsChart data={monthlyData} isPrint />
               </ChartCard>
@@ -91,7 +128,7 @@ export default function PrintView() {
                 <FinancialChart data={monthlyData} isPrint />
               </ChartCard>
             </div>
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-6">
               <ChartCard title="Garantias Utilizadas" subtitle="Distribuição dos tipos de garantia nos novos contratos">
                 <RescissionChart data={guaranteeData} isPrint />
               </ChartCard>
