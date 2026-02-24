@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+/* Dark mode baseado em classe .dark no <html> */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Scrollbar invisível para a barra de filtros */
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Transição suave do tema */
+*, *::before, *::after {
+  transition-property: background-color, border-color, color;
+  transition-duration: 150ms;
+  transition-timing-function: ease;
+}
+
+/* Desabilita transição em elementos interativos para não atrapalhar hover */
+button, a, input, select {
+  transition-property: background-color, border-color, color, box-shadow, transform;
+}
