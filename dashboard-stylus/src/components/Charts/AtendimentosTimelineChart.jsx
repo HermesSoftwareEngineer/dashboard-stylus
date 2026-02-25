@@ -32,7 +32,12 @@ const CustomTooltip = ({ active, payload, label }) => {
   );
 };
 
-export default function AtendimentosTimelineChart({ data, showContracts = false, isPrint = false }) {
+export default function AtendimentosTimelineChart({
+  data,
+  showContracts = false,
+  isPrint = false,
+  onChartClick,
+}) {
   const isAnimationActive = !isPrint;
   if (!data?.length) {
     return (
@@ -44,7 +49,13 @@ export default function AtendimentosTimelineChart({ data, showContracts = false,
 
   return (
     <ResponsiveContainer width="100%" height={300}>
-      <ComposedChart data={data} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+      <ComposedChart
+        data={data}
+        margin={{ top: 5, right: 20, left: -10, bottom: 5 }}
+        onClick={() => {
+          if (!isPrint && onChartClick) onChartClick();
+        }}
+      >
         <defs>
           <linearGradient id={atendimentosGradientId} x1="0" y1="0" x2="0" y2="1">
             <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3} />

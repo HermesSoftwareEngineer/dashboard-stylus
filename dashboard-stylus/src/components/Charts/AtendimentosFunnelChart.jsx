@@ -55,7 +55,7 @@ const CustomTooltip = ({ active, payload }) => {
   );
 };
 
-export default function AtendimentosFunnelChart({ data, isPrint = false }) {
+export default function AtendimentosFunnelChart({ data, isPrint = false, onChartClick }) {
   if (!data?.length) {
     return (
       <div className="flex items-center justify-center h-60 text-gray-400 dark:text-neutral-500 text-sm">
@@ -68,7 +68,11 @@ export default function AtendimentosFunnelChart({ data, isPrint = false }) {
 
   return (
     <ResponsiveContainer width="100%" height={320}>
-      <FunnelChart>
+      <FunnelChart
+        onClick={() => {
+          if (!isPrint && onChartClick) onChartClick();
+        }}
+      >
         <Tooltip content={<CustomTooltip />} />
         <Funnel
           dataKey="value"

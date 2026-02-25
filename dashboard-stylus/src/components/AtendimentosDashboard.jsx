@@ -55,7 +55,7 @@ function formatAddress(item) {
   return number ? `${street}, ${number}` : street;
 }
 
-export default function AtendimentosDashboard({ isPrint = false }) {
+export default function AtendimentosDashboard({ isPrint = false, onOpenDetails }) {
   const { atendimentosRent, atendimentosSale, propertiesRent, propertiesSale, contracts, filter, atendimentosFilter } = useContracts();
   const { metrics, timeline } = useAtendimentosData();
 
@@ -146,21 +146,70 @@ export default function AtendimentosDashboard({ isPrint = false }) {
         title="Funil de Performance Comercial"
         subtitle="Leads, qualificados, visitas, propostas e fechamentos"
       >
-        <AtendimentosFunnelChart data={metrics.funnelStages} isPrint={isPrint} />
+        <AtendimentosFunnelChart
+          data={metrics.funnelStages}
+          isPrint={isPrint}
+          onChartClick={
+            onOpenDetails
+              ? () =>
+                  onOpenDetails({
+                    type: 'atendimentos',
+                    title: 'Atendimentos',
+                    rows: metrics?.filtered || [
+                      ...atendimentosRent,
+                      ...atendimentosSale,
+                    ],
+                  })
+              : undefined
+          }
+        />
       </SectionCard>
 
       <SectionCard
         title="Evolução de novos atendimentos"
         subtitle={hasContracts ? 'Atendimentos vs. novos contratos no período' : 'Comparativo entre aluguel e venda'}
       >
-        <AtendimentosTimelineChart data={mergedTimeline} showContracts={hasContracts} isPrint={isPrint} />
+        <AtendimentosTimelineChart
+          data={mergedTimeline}
+          showContracts={hasContracts}
+          isPrint={isPrint}
+          onChartClick={
+            onOpenDetails
+              ? () =>
+                  onOpenDetails({
+                    type: 'atendimentos',
+                    title: 'Atendimentos',
+                    rows: metrics?.filtered || [
+                      ...atendimentosRent,
+                      ...atendimentosSale,
+                    ],
+                  })
+              : undefined
+          }
+        />
       </SectionCard>
 
       <SectionCard
         title="Origem dos Atendimentos"
         subtitle="Distribuição por canal e conversão"
       >
-        <AtendimentosOriginChart data={metrics.originData} isPrint={isPrint} />
+        <AtendimentosOriginChart
+          data={metrics.originData}
+          isPrint={isPrint}
+          onChartClick={
+            onOpenDetails
+              ? () =>
+                  onOpenDetails({
+                    type: 'atendimentos',
+                    title: 'Atendimentos',
+                    rows: metrics?.filtered || [
+                      ...atendimentosRent,
+                      ...atendimentosSale,
+                    ],
+                  })
+              : undefined
+          }
+        />
       </SectionCard>
 
       <SectionCard
@@ -203,7 +252,23 @@ export default function AtendimentosDashboard({ isPrint = false }) {
         title="Principais Motivos de Descarte"
         subtitle="Pareto de gargalos comerciais"
       >
-        <AtendimentosParetoChart data={metrics.paretoData} isPrint={isPrint} />
+        <AtendimentosParetoChart
+          data={metrics.paretoData}
+          isPrint={isPrint}
+          onChartClick={
+            onOpenDetails
+              ? () =>
+                  onOpenDetails({
+                    type: 'atendimentos',
+                    title: 'Atendimentos',
+                    rows: metrics?.filtered || [
+                      ...atendimentosRent,
+                      ...atendimentosSale,
+                    ],
+                  })
+              : undefined
+          }
+        />
       </SectionCard>
     </div>
   );

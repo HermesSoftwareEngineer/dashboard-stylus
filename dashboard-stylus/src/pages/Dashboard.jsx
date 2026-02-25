@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
+import { isWithinInterval } from 'date-fns';
 import { useContracts } from '../context/ContractsContext';
 import { useContractsData } from '../hooks/useContractsData';
 import { parseExcelFile } from '../utils/parseExcel';
+import { parseContractDate } from '../utils/metrics';
 import Filters from '../components/Filters';
 import ImoveisFilters from '../components/ImoveisFilters';
 import AtendimentosFilters from '../components/AtendimentosFilters';
@@ -13,6 +15,7 @@ import ContractsChart from '../components/Charts/ContractsChart';
 import FinancialChart from '../components/Charts/FinancialChart';
 import RescissionChart from '../components/Charts/RescissionChart';
 import ThemeToggle from '../components/ThemeToggle';
+import DetailsModal from '../components/DetailsModal';
 
 // ─── Chart Card wrapper ────────────────────────────────────────────────────────
 
@@ -42,12 +45,55 @@ export default function Dashboard({ isDark, toggleTheme }) {
     atendimentosSale,
     saveDataToStorage
   } = useContracts();
-  const { kpis, monthlyData, guaranteeData } = useContractsData();
+  const { kpis, monthlyData, guaranteeData, startDate, endDate } = useContractsData();
   const fileInputRef = useRef(null);
   const hasData = contracts.length > 0;
   const [activeTab, setActiveTab] = useState('contratos');
   const hasProperties = propertiesRent.length > 0 || propertiesSale.length > 0;
   const hasAtendimentos = atendimentosRent.length > 0 || atendimentosSale.length > 0;
+
+  const [detailsModal, setDetailsModal] = useState({
+    open: false,
+    type: null,
+    title: '',
+    subtitle: '',
+    rows: [],
+  });
+
+  const filterContractsByPeriod = () => {
+    if (!contracts?.length) return [];
+    if (!startDate && !endDate) return contracts;
+
+    const safeStart = startDate || new Date(0);
+    const safeEnd = endDate || new Date(8_640_000_000_000_000);
+
+    return contracts.filter((c) => {
+      const d =
+        parseContractDate(c.DataInicio) ??
+        parseContractDate(c.DataAtivacao) ??
+        parseContractDate(c.DataInclusao);
+      if (!d) return false;
+      try {
+        return isWithinInterval(d, { start: safeStart, end: safeEnd });
+      } catch {
+        return false;
+      }
+    });
+  };
+
+  const openDetailsModal = ({ type, title, subtitle, rows }) => {
+    setDetailsModal({
+      open: true,
+      type,
+      title,
+      subtitle: subtitle || '',
+      rows: rows || [],
+    });
+  };
+
+  const closeDetailsModal = () => {
+    setDetailsModal((prev) => ({ ...prev, open: false }));
+  };
 
   const handleReimport = async (e) => {
     const file = e.target.files[0];
@@ -217,14 +263,34 @@ export default function Dashboard({ isDark, toggleTheme }) {
                   title="Produção Contratual"
                   subtitle="Novos contratos vs. Rescisões por mês"
                 >
-                  <ContractsChart data={monthlyData} />
+                  <ContractsChart
+                    data={monthlyData}
+                    onChartClick={() =>
+                      openDetailsModal({
+                        type: 'contracts',
+                        title: 'Contratos',
+                        subtitle: 'Contratos do período selecionado',
+                        rows: filterContractsByPeriod(),
+                      })
+                    }
+                  />
                 </ChartCard>
 
                 <ChartCard
                   title="Evolução Financeira"
                   subtitle="VGL gerado vs. valor rescindido (R$)"
                 >
-                  <FinancialChart data={monthlyData} />
+                  <FinancialChart
+                    data={monthlyData}
+                    onChartClick={() =>
+                      openDetailsModal({
+                        type: 'contracts',
+                        title: 'Contratos',
+                        subtitle: 'Contratos do período selecionado',
+                        rows: filterContractsByPeriod(),
+                      })
+                    }
+                  />
                 </ChartCard>
               </div>
 
@@ -234,7 +300,17 @@ export default function Dashboard({ isDark, toggleTheme }) {
                   title="Garantias Utilizadas"
                   subtitle="Distribuição dos tipos de garantia nos novos contratos"
                 >
-                  <RescissionChart data={guaranteeData} />
+                  <RescissionChart
+                    data={guaranteeData}
+                    onChartClick={() =>
+                      openDetailsModal({
+                        type: 'contracts',
+                        title: 'Contratos',
+                        subtitle: 'Contratos do período selecionado',
+                        rows: filterContractsByPeriod(),
+                      })
+                    }
+                  />
                 </ChartCard>
 
                 {/* Resumo Rescisões */}
@@ -305,9 +381,31 @@ export default function Dashboard({ isDark, toggleTheme }) {
           )
         )}
 
-        {activeTab === 'imoveis' && <ImoveisDashboard />}
+        {activeTab === 'imoveis' && (
+          <ImoveisDashboard
+            onOpenDetails={({ type, title, rows }) =>
+              openDetailsModal({
+                type,
+                title,
+                subtitle: 'Registros de imóveis no período selecionado',
+                rows,
+              })
+            }
+          />
+        )}
 
-        {activeTab === 'atendimentos' && <AtendimentosDashboard />}
+        {activeTab === 'atendimentos' && (
+          <AtendimentosDashboard
+            onOpenDetails={({ type, title, rows }) =>
+              openDetailsModal({
+                type,
+                title,
+                subtitle: 'Atendimentos no período selecionado',
+                rows,
+              })
+            }
+          />
+        )}
 
         {/* ── Print slides (todos os relatórios) ─────────────────── */}
         <div className="print-only">
@@ -354,6 +452,15 @@ export default function Dashboard({ isDark, toggleTheme }) {
           </section>
         </div>
       </main>
+
+      <DetailsModal
+        open={detailsModal.open}
+        onClose={closeDetailsModal}
+        type={detailsModal.type}
+        title={detailsModal.title}
+        subtitle={detailsModal.subtitle}
+        rows={detailsModal.rows}
+      />
     </div>
   );
 }

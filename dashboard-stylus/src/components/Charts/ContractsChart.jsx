@@ -32,7 +32,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 const novosGradientId = 'novosGradient';
 const rescisoesGradientId = 'rescisoesGradient';
 
-export default function ContractsChart({ data, isPrint = false }) {
+export default function ContractsChart({ data, isPrint = false, onChartClick }) {
   const isAnimationActive = !isPrint;
   if (!data?.length) {
     return (
@@ -44,7 +44,13 @@ export default function ContractsChart({ data, isPrint = false }) {
 
   return (
     <ResponsiveContainer width="100%" height={300}>
-      <ComposedChart data={data} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
+      <ComposedChart
+        data={data}
+        margin={{ top: 5, right: 10, left: -10, bottom: 5 }}
+        onClick={() => {
+          if (!isPrint && onChartClick) onChartClick();
+        }}
+      >
         <defs>
           <linearGradient id={novosGradientId} x1="0" y1="0" x2="0" y2="1">
             <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3} />

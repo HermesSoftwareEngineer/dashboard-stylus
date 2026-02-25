@@ -35,7 +35,7 @@ const CustomTooltip = ({ active, payload, label }) => {
   );
 };
 
-export default function AtendimentosParetoChart({ data, isPrint = false }) {
+export default function AtendimentosParetoChart({ data, isPrint = false, onChartClick }) {
   const isAnimationActive = !isPrint;
   if (!data?.length) {
     return (
@@ -47,7 +47,13 @@ export default function AtendimentosParetoChart({ data, isPrint = false }) {
 
   return (
     <ResponsiveContainer width="100%" height={280}>
-      <ComposedChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+      <ComposedChart
+        data={data}
+        margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
+        onClick={() => {
+          if (!isPrint && onChartClick) onChartClick();
+        }}
+      >
         <defs>
           <linearGradient id={cumulativeGradientId} x1="0" y1="0" x2="0" y2="1">
             <stop offset="5%" stopColor="#ef4444" stopOpacity={0.25} />

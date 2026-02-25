@@ -33,7 +33,7 @@ function SectionCard({ title, subtitle, children }) {
   );
 }
 
-function PropertiesSection({ title, data, kpis, isPrint }) {
+function PropertiesSection({ title, data, kpis, isPrint, onOpenDetails }) {
   const destinationData = [
     { name: 'Residencial', value: kpis.destination.Residencial },
     { name: 'Comercial', value: kpis.destination.Comercial },
@@ -83,14 +83,22 @@ function PropertiesSection({ title, data, kpis, isPrint }) {
               title="Distribuição por destinação"
               subtitle="Residencial, Comercial e Misto"
             >
-              <PropertiesDestinationChart data={destinationData} isPrint={isPrint} />
+              <PropertiesDestinationChart
+                data={destinationData}
+                isPrint={isPrint}
+                onChartClick={onOpenDetails}
+              />
             </SectionCard>
 
             <SectionCard
               title="Qualidade dos anúncios (Score)"
               subtitle="Faixas de pontuação"
             >
-              <PropertiesScoreChart data={scoreData} isPrint={isPrint} />
+              <PropertiesScoreChart
+                data={scoreData}
+                isPrint={isPrint}
+                onChartClick={onOpenDetails}
+              />
             </SectionCard>
           </div>
         </>
@@ -99,7 +107,7 @@ function PropertiesSection({ title, data, kpis, isPrint }) {
   );
 }
 
-export default function ImoveisDashboard({ isPrint = false }) {
+export default function ImoveisDashboard({ isPrint = false, onOpenDetails }) {
   const { propertiesRent, propertiesSale } = useContracts();
   const { startDate, endDate } = usePropertiesData();
   const hasRent = propertiesRent.length > 0;
@@ -110,7 +118,7 @@ export default function ImoveisDashboard({ isPrint = false }) {
     [propertiesRent, startDate, endDate]
   );
   const saleKpis = useMemo(
-    () => computePropertyKPIs(propertiesSale, startDate, endDate),
+    () => computePropertyKPIs(propertiesSale, startDate, endDate, { advertisedOnly: true }),
     [propertiesSale, startDate, endDate]
   );
 
@@ -123,6 +131,17 @@ export default function ImoveisDashboard({ isPrint = false }) {
         data={propertiesRent}
         kpis={rentKpis}
         isPrint={isPrint}
+        onOpenDetails={
+          onOpenDetails
+            ? () =>
+                onOpenDetails({
+                  type: 'properties',
+                  scope: 'rent',
+                  title: 'Imóveis - Aluguel',
+                  rows: rentKpis?.items || propertiesRent,
+                })
+            : undefined
+        }
       />
 
       <PropertiesSection
@@ -130,6 +149,17 @@ export default function ImoveisDashboard({ isPrint = false }) {
         data={propertiesSale}
         kpis={saleKpis}
         isPrint={isPrint}
+        onOpenDetails={
+          onOpenDetails
+            ? () =>
+                onOpenDetails({
+                  type: 'properties',
+                  scope: 'sale',
+                  title: 'Imóveis - Venda',
+                  rows: saleKpis?.items || propertiesSale,
+                })
+            : undefined
+        }
       />
     </div>
   );

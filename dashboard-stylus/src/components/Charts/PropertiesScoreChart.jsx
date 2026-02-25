@@ -23,7 +23,7 @@ const CustomTooltip = ({ active, payload }) => {
   );
 };
 
-export default function PropertiesScoreChart({ data, isPrint = false }) {
+export default function PropertiesScoreChart({ data, isPrint = false, onChartClick }) {
   const isAnimationActive = !isPrint;
   const total = data?.reduce((sum, item) => sum + item.value, 0) ?? 0;
 
@@ -37,7 +37,13 @@ export default function PropertiesScoreChart({ data, isPrint = false }) {
 
   return (
     <ResponsiveContainer width="100%" height={240}>
-      <BarChart data={data} margin={{ top: 5, right: 5, left: -10, bottom: 5 }}>
+      <BarChart
+        data={data}
+        margin={{ top: 5, right: 5, left: -10, bottom: 5 }}
+        onClick={() => {
+          if (!isPrint && onChartClick) onChartClick();
+        }}
+      >
         <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="opacity-10" />
         <XAxis
           dataKey="name"

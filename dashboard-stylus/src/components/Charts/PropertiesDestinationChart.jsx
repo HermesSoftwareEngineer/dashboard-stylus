@@ -23,7 +23,7 @@ const CustomTooltip = ({ active, payload }) => {
   );
 };
 
-export default function PropertiesDestinationChart({ data, isPrint = false }) {
+export default function PropertiesDestinationChart({ data, isPrint = false, onChartClick }) {
   const isAnimationActive = !isPrint;
   const total = data?.reduce((sum, item) => sum + item.value, 0) ?? 0;
 
@@ -37,7 +37,11 @@ export default function PropertiesDestinationChart({ data, isPrint = false }) {
 
   return (
     <ResponsiveContainer width="100%" height={240}>
-      <PieChart>
+      <PieChart
+        onClick={() => {
+          if (!isPrint && onChartClick) onChartClick();
+        }}
+      >
         <Pie
           data={data}
           cx="50%"

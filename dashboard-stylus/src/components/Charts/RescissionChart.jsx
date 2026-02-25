@@ -37,7 +37,7 @@ const CustomTooltip = ({ active, payload }) => {
   );
 };
 
-export default function RescissionChart({ data, isPrint = false }) {
+export default function RescissionChart({ data, isPrint = false, onChartClick }) {
   const isAnimationActive = !isPrint;
   if (!data?.length) {
     return (
@@ -52,7 +52,11 @@ export default function RescissionChart({ data, isPrint = false }) {
   return (
     <div className="flex flex-col items-center">
       <ResponsiveContainer width="100%" height={260}>
-        <PieChart>
+        <PieChart
+          onClick={() => {
+            if (!isPrint && onChartClick) onChartClick();
+          }}
+        >
           <Pie
             data={data}
             cx="50%"

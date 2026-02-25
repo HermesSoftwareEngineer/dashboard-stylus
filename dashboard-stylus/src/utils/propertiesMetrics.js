@@ -128,5 +128,6 @@ export function computePropertyKPIs(items, startDate, endDate, options = {}) {
     vgvTotal,
     destination,
     scoreBands,
+    items: filteredByStatus,
   };
 }
