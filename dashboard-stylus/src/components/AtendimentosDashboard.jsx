@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import { useContracts } from '../context/ContractsContext';
 import { useAtendimentosData } from '../hooks/useAtendimentosData';
-import { formatNumber, formatPercent } from '../utils/metrics';
+import { formatNumber, formatPercent, computeMonthlyData } from '../utils/metrics';
+import { getDateRange } from '../utils/dateRange';
 import AtendimentosUpload from './AtendimentosUpload';
 import AtendimentosFunnelChart from './Charts/AtendimentosFunnelChart';
 import AtendimentosOriginChart from './Charts/AtendimentosOriginChart';
@@ -55,11 +56,12 @@ function formatAddress(item) {
 }
 
 export default function AtendimentosDashboard({ isPrint = false }) {
-  const { atendimentosRent, atendimentosSale, propertiesRent, propertiesSale } = useContracts();
+  const { atendimentosRent, atendimentosSale, propertiesRent, propertiesSale, contracts, filter, atendimentosFilter } = useContracts();
   const { metrics, timeline } = useAtendimentosData();
 
   const hasRent = atendimentosRent.length > 0;
   const hasSale = atendimentosSale.length > 0;
+  const hasContracts = contracts.length > 0;
 
   const addressMap = useMemo(() => {
     const map = new Map();
@@ -72,6 +74,53 @@ export default function AtendimentosDashboard({ isPrint = false }) {
     });
     return map;
   }, [propertiesRent, propertiesSale]);
+
+  // Mescla timeline de atendimentos com novos contratos (se disponível)
+  const mergedTimeline = useMemo(() => {
+    if (!hasContracts || !timeline?.length) return timeline;
+
+    // Calcula contratos mensais usando o filtro de atendimentos para alinhar o período
+    const { startDate, endDate } = getDateRange(atendimentosFilter);
+    const granularityMap = { day: 'daily', week: 'weekly', month: 'monthly', quarter: 'monthly', year: 'monthly', auto: 'auto' };
+    const contractsGranularity = granularityMap[atendimentosFilter?.granularity || 'auto'] || 'auto';
+    const contractsMonthly = computeMonthlyData(contracts, startDate, endDate, contractsGranularity);
+
+    // Cria mapa de key normalizado → novos contratos
+    // timeline usa key como "yyyy-MM", contracts usa key como "yyyy-MM" nos periods internos
+    // mas computeMonthlyData retorna apenas o label (month). Precisamos reconstruir a chave pela data.
+    // Alternativa: indexar contracts por label e converter o label do timeline para o mesmo formato.
+    // Como os formatos diferem (MMM yyyy vs MMM/yy), vamos usar a data do timeline para gerar a chave.
+    const contractsMap = new Map();
+    contractsMonthly.forEach((item) => {
+      // Normaliza o label removendo espaços/barras para criar uma chave de comparação
+      contractsMap.set(item.month.toLowerCase().trim(), item.novos);
+    });
+
+    // Mescla nos dados de timeline usando a data para gerar o mesmo formato de label do contracts
+    return timeline.map((item) => {
+      let novos = 0;
+      if (item.date) {
+        // Gera o label no formato que computeMonthlyData usa (depende da granularidade)
+        const d = new Date(item.date);
+        if (!isNaN(d.getTime())) {
+          // Tenta formatos: dd/MM (daily), dd/MM - dd/MM (weekly), MMM/yy (monthly)
+          const months = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+          const yy = String(d.getFullYear()).slice(2);
+          const mm = months[d.getMonth()];
+          const dd = String(d.getDate()).padStart(2, '0');
+          const mo = String(d.getMonth() + 1).padStart(2, '0');
+
+          // Tenta monthly: "mmm/yy"
+          const monthlyKey = `${mm}/${yy}`;
+          // Tenta daily: "dd/mm"
+          const dailyKey = `${dd}/${mo}`;
+
+          novos = contractsMap.get(monthlyKey) ?? contractsMap.get(dailyKey) ?? 0;
+        }
+      }
+      return { ...item, novosContratos: novos };
+    });
+  }, [timeline, contracts, hasContracts, atendimentosFilter]);
 
   return (
     <div className="space-y-6">
@@ -102,9 +151,9 @@ export default function AtendimentosDashboard({ isPrint = false }) {
 
       <SectionCard
         title="Evolução de novos atendimentos"
-        subtitle="Comparativo entre aluguel e venda"
+        subtitle={hasContracts ? 'Atendimentos vs. novos contratos no período' : 'Comparativo entre aluguel e venda'}
       >
-        <AtendimentosTimelineChart data={timeline} isPrint={isPrint} />
+        <AtendimentosTimelineChart data={mergedTimeline} showContracts={hasContracts} isPrint={isPrint} />
       </SectionCard>
 
       <SectionCard
