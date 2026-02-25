@@ -15,13 +15,13 @@ const atendimentosGradientId = 'atendimentosGradient';
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-3 shadow-xl text-xs">
-      <p className="font-semibold text-neutral-200 mb-2">{label}</p>
+    <div className="bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-xl p-3 shadow-xl text-xs">
+      <p className="font-semibold text-gray-700 dark:text-neutral-200 mb-2">{label}</p>
       {payload.map((entry, i) => (
         <div key={i} className="flex items-center gap-2 mb-1">
           <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: entry.color }} />
-          <span className="text-neutral-400">{entry.name}:</span>
-          <span className="font-semibold text-neutral-100">
+          <span className="text-gray-500 dark:text-neutral-400">{entry.name}:</span>
+          <span className="font-semibold text-gray-900 dark:text-neutral-100">
             {formatNumber(entry.value)}
           </span>
         </div>
@@ -34,7 +34,7 @@ export default function AtendimentosTimelineChart({ data, isPrint = false }) {
   const isAnimationActive = !isPrint;
   if (!data?.length) {
     return (
-      <div className="flex items-center justify-center h-64 text-neutral-500 text-sm">
+      <div className="flex items-center justify-center h-64 text-gray-400 dark:text-neutral-500 text-sm">
         Sem dados para o período selecionado
       </div>
     );
@@ -53,13 +53,13 @@ export default function AtendimentosTimelineChart({ data, isPrint = false }) {
         <XAxis
           dataKey="label"
           tick={{ fontSize: 11, fill: 'currentColor' }}
-          className="text-neutral-500"
+          className="text-gray-400 dark:text-neutral-500"
           axisLine={false}
           tickLine={false}
         />
         <YAxis
           tick={{ fontSize: 11, fill: 'currentColor' }}
-          className="text-neutral-500"
+          className="text-gray-400 dark:text-neutral-500"
           axisLine={false}
           tickLine={false}
           allowDecimals={false}

@@ -36,8 +36,8 @@ function UploadCard({ title, description, onSelect }) {
   return (
     <div
       className={[
-        'bg-neutral-900 rounded-xl border p-5 shadow-[0_0_0_1px_rgba(24,24,27,0.6)] transition-colors',
-        isDragging ? 'border-red-500/70 bg-neutral-900/90' : 'border-neutral-800',
+        'bg-white dark:bg-neutral-900 rounded-xl border p-5 shadow-sm dark:shadow-[0_0_0_1px_rgba(24,24,27,0.6)] transition-colors',
+        isDragging ? 'border-red-500/70 bg-red-50/50 dark:bg-neutral-900/90' : 'border-gray-200 dark:border-neutral-800',
       ].join(' ')}
       onDragEnter={(e) => {
         e.preventDefault();
@@ -60,14 +60,14 @@ function UploadCard({ title, description, onSelect }) {
     >
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-xs font-medium text-red-300 uppercase tracking-wide mb-1">
+          <p className="text-xs font-medium text-red-600 dark:text-red-300 uppercase tracking-wide mb-1">
             {title}
           </p>
-          <p className="text-sm text-neutral-400">{description}</p>
+          <p className="text-sm text-gray-500 dark:text-neutral-400">{description}</p>
         </div>
         <button
           onClick={() => inputRef.current?.click()}
-          className="text-xs font-medium px-3 py-2 rounded-lg border border-neutral-800 text-neutral-200 hover:bg-neutral-800/60 transition-colors"
+          className="text-xs font-medium px-3 py-2 rounded-lg border border-gray-200 dark:border-neutral-800 text-gray-700 dark:text-neutral-200 hover:bg-gray-100 dark:hover:bg-neutral-800/60 transition-colors"
         >
           Importar
         </button>
@@ -76,7 +76,7 @@ function UploadCard({ title, description, onSelect }) {
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
-        className="mt-4 w-full border border-dashed border-neutral-700 rounded-lg py-6 text-xs text-neutral-400 hover:border-red-500/60 hover:text-neutral-200 transition-colors"
+        className="mt-4 w-full border border-dashed border-gray-300 dark:border-neutral-700 rounded-lg py-6 text-xs text-gray-500 dark:text-neutral-400 hover:border-red-500/60 hover:text-gray-700 dark:hover:text-neutral-200 transition-colors"
       >
         Arraste e solte o arquivo aqui ou clique para selecionar
       </button>
@@ -90,10 +90,10 @@ function UploadCard({ title, description, onSelect }) {
       />
 
       {isLoading && (
-        <p className="text-xs text-neutral-400 mt-3">Processando planilha…</p>
+        <p className="text-xs text-gray-500 dark:text-neutral-400 mt-3">Processando planilha…</p>
       )}
       {error && (
-        <p className="text-xs text-red-300 mt-3">{error}</p>
+        <p className="text-xs text-red-600 dark:text-red-300 mt-3">{error}</p>
       )}
     </div>
   );

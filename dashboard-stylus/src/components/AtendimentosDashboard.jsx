@@ -10,24 +10,24 @@ import AtendimentosTimelineChart from './Charts/AtendimentosTimelineChart';
 
 function StatCard({ title, value, subtitle }) {
   return (
-    <div className="bg-neutral-900 rounded-xl border border-neutral-800 p-5 shadow-[0_0_0_1px_rgba(24,24,27,0.6)]">
-      <p className="text-xs font-medium text-red-300 uppercase tracking-wide mb-1">
+    <div className="bg-white dark:bg-neutral-900 rounded-xl border border-gray-200 dark:border-neutral-800 p-5 shadow-sm dark:shadow-[0_0_0_1px_rgba(24,24,27,0.6)]">
+      <p className="text-xs font-medium text-red-600 dark:text-red-300 uppercase tracking-wide mb-1">
         {title}
       </p>
-      <p className="text-2xl font-bold text-neutral-100 leading-tight">
+      <p className="text-2xl font-bold text-gray-900 dark:text-neutral-100 leading-tight">
         {value}
       </p>
-      {subtitle && <p className="text-xs text-neutral-400 mt-1">{subtitle}</p>}
+      {subtitle && <p className="text-xs text-gray-500 dark:text-neutral-400 mt-1">{subtitle}</p>}
     </div>
   );
 }
 
 function SectionCard({ title, subtitle, children }) {
   return (
-    <div className="bg-neutral-900 rounded-xl border border-neutral-800 p-5 shadow-[0_0_0_1px_rgba(24,24,27,0.6)]">
+    <div className="bg-white dark:bg-neutral-900 rounded-xl border border-gray-200 dark:border-neutral-800 p-5 shadow-sm dark:shadow-[0_0_0_1px_rgba(24,24,27,0.6)]">
       <div className="mb-4">
-        <h3 className="text-sm font-semibold text-neutral-100">{title}</h3>
-        {subtitle && <p className="text-xs text-neutral-400 mt-0.5">{subtitle}</p>}
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-neutral-100">{title}</h3>
+        {subtitle && <p className="text-xs text-gray-500 dark:text-neutral-400 mt-0.5">{subtitle}</p>}
       </div>
       {children}
     </div>
@@ -122,7 +122,7 @@ export default function AtendimentosDashboard({ isPrint = false }) {
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="text-neutral-500 text-left border-b border-neutral-800">
+                <tr className="text-gray-400 dark:text-neutral-500 text-left border-b border-gray-200 dark:border-neutral-800">
                   <th className="py-2 pr-2">Imóvel</th>
                   <th className="py-2 pr-2">Endereço</th>
                   <th className="py-2 pr-2">Cliques</th>
@@ -132,21 +132,21 @@ export default function AtendimentosDashboard({ isPrint = false }) {
               </thead>
               <tbody>
                 {metrics.topImoveis.map((row) => (
-                  <tr key={row.id} className="border-b border-neutral-800/70 last:border-0">
-                    <td className="py-2 pr-2 text-neutral-200 font-medium">#{row.id}</td>
-                    <td className="py-2 pr-2 text-neutral-400">
+                  <tr key={row.id} className="border-b border-gray-200/70 dark:border-neutral-800/70 last:border-0">
+                    <td className="py-2 pr-2 text-gray-700 dark:text-neutral-200 font-medium">#{row.id}</td>
+                    <td className="py-2 pr-2 text-gray-500 dark:text-neutral-400">
                       {addressMap.get(String(row.id)) || 'Endereço não encontrado'}
                     </td>
-                    <td className="py-2 pr-2 text-neutral-300">{formatNumber(row.clicks)}</td>
-                    <td className="py-2 pr-2 text-neutral-300">{formatNumber(row.leads)}</td>
-                    <td className="py-2 text-neutral-300">{formatNumber(row.visits)}</td>
+                    <td className="py-2 pr-2 text-gray-600 dark:text-neutral-300">{formatNumber(row.clicks)}</td>
+                    <td className="py-2 pr-2 text-gray-600 dark:text-neutral-300">{formatNumber(row.leads)}</td>
+                    <td className="py-2 text-gray-600 dark:text-neutral-300">{formatNumber(row.visits)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         ) : (
-          <div className="text-sm text-neutral-500">Sem dados de imóveis no período.</div>
+          <div className="text-sm text-gray-400 dark:text-neutral-500">Sem dados de imóveis no período.</div>
         )}
       </SectionCard>
 

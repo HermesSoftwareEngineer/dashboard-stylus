@@ -64,16 +64,18 @@ export default function AtendimentosFilters() {
     updateAtendimentosFilter({ granularity: value });
   };
 
+  const selectClass = "px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-neutral-800 bg-gray-50 dark:bg-neutral-950 text-gray-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-neutral-600";
+
   return (
-    <div className="bg-black border-b border-neutral-800 px-4 lg:px-6 py-3">
+    <div className="bg-white dark:bg-black border-b border-gray-200 dark:border-neutral-800 px-4 lg:px-6 py-3">
       <div className="flex flex-wrap items-center gap-3">
-        <label className="text-xs uppercase tracking-wide text-red-300 font-semibold">
+        <label className="text-xs uppercase tracking-wide text-red-600 dark:text-red-300 font-semibold">
           Seletor de período
         </label>
         <select
           value={atendimentosFilter.period}
           onChange={(e) => handlePeriod(e.target.value)}
-          className="px-3 py-2 text-xs rounded-lg border border-neutral-800 bg-neutral-950 text-neutral-100 focus:outline-none focus:ring-2 focus:ring-neutral-600"
+          className={selectClass}
         >
           {PERIODS.map((p) => (
             <option key={p.value} value={p.value}>
@@ -82,13 +84,13 @@ export default function AtendimentosFilters() {
           ))}
         </select>
 
-        <label className="text-xs uppercase tracking-wide text-red-300 font-semibold ml-2">
+        <label className="text-xs uppercase tracking-wide text-red-600 dark:text-red-300 font-semibold ml-2">
           Colaborador
         </label>
         <select
           value={atendimentosFilter.collaborator}
           onChange={(e) => handleCollaborator(e.target.value)}
-          className="px-3 py-2 text-xs rounded-lg border border-neutral-800 bg-neutral-950 text-neutral-100 focus:outline-none focus:ring-2 focus:ring-neutral-600"
+          className={selectClass}
         >
           <option value="todos">Todos</option>
           {collaborators.map((name) => (
@@ -98,26 +100,26 @@ export default function AtendimentosFilters() {
           ))}
         </select>
 
-        <label className="text-xs uppercase tracking-wide text-red-300 font-semibold ml-2">
+        <label className="text-xs uppercase tracking-wide text-red-600 dark:text-red-300 font-semibold ml-2">
           Finalidade
         </label>
         <select
           value={atendimentosFilter.purpose}
           onChange={(e) => handlePurpose(e.target.value)}
-          className="px-3 py-2 text-xs rounded-lg border border-neutral-800 bg-neutral-950 text-neutral-100 focus:outline-none focus:ring-2 focus:ring-neutral-600"
+          className={selectClass}
         >
           <option value="todos">Todos</option>
           <option value="aluguel">Aluguel</option>
           <option value="venda">Venda</option>
         </select>
 
-        <label className="text-xs uppercase tracking-wide text-red-300 font-semibold ml-2">
+        <label className="text-xs uppercase tracking-wide text-red-600 dark:text-red-300 font-semibold ml-2">
           Granularidade
         </label>
         <select
           value={atendimentosFilter.granularity || 'auto'}
           onChange={(e) => handleGranularity(e.target.value)}
-          className="px-3 py-2 text-xs rounded-lg border border-neutral-800 bg-neutral-950 text-neutral-100 focus:outline-none focus:ring-2 focus:ring-neutral-600"
+          className={selectClass}
         >
           {GRANULARITIES.map((g) => (
             <option key={g.value} value={g.value}>
@@ -129,22 +131,22 @@ export default function AtendimentosFilters() {
 
       {atendimentosFilter.period === 'custom' && (
         <div className="flex items-center gap-3 mt-3 flex-wrap">
-          <label className="flex items-center gap-2 text-xs text-neutral-400">
-            <span className="font-medium text-red-300">De:</span>
+          <label className="flex items-center gap-2 text-xs text-gray-500 dark:text-neutral-400">
+            <span className="font-medium text-red-600 dark:text-red-300">De:</span>
             <input
               type="date"
               value={atendimentosFilter.startDate || ''}
               onChange={(e) => updateAtendimentosFilter({ startDate: e.target.value })}
-              className="px-2 py-1 text-xs rounded-lg border border-neutral-800 bg-neutral-950 text-neutral-100 focus:outline-none focus:ring-2 focus:ring-neutral-600"
+              className="px-2 py-1 text-xs rounded-lg border border-gray-200 dark:border-neutral-800 bg-gray-50 dark:bg-neutral-950 text-gray-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-neutral-600"
             />
           </label>
-          <label className="flex items-center gap-2 text-xs text-neutral-400">
-            <span className="font-medium text-red-300">Até:</span>
+          <label className="flex items-center gap-2 text-xs text-gray-500 dark:text-neutral-400">
+            <span className="font-medium text-red-600 dark:text-red-300">Até:</span>
             <input
               type="date"
               value={atendimentosFilter.endDate || ''}
               onChange={(e) => updateAtendimentosFilter({ endDate: e.target.value })}
-              className="px-2 py-1 text-xs rounded-lg border border-neutral-800 bg-neutral-950 text-neutral-100 focus:outline-none focus:ring-2 focus:ring-neutral-600"
+              className="px-2 py-1 text-xs rounded-lg border border-gray-200 dark:border-neutral-800 bg-gray-50 dark:bg-neutral-950 text-gray-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-neutral-600"
             />
           </label>
         </div>

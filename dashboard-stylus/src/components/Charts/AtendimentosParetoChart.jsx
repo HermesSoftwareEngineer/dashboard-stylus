@@ -21,14 +21,14 @@ const CustomTooltip = ({ active, payload, label }) => {
   }, {});
 
   return (
-    <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-3 shadow-xl text-xs">
-      <p className="font-semibold text-neutral-200 mb-2">{label}</p>
+    <div className="bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-xl p-3 shadow-xl text-xs">
+      <p className="font-semibold text-gray-700 dark:text-neutral-200 mb-2">{label}</p>
       <div className="space-y-1">
-        <p className="text-neutral-400">
-          Ocorrências: <span className="font-semibold text-neutral-100">{formatNumber(data.count || 0)}</span>
+        <p className="text-gray-500 dark:text-neutral-400">
+          Ocorrências: <span className="font-semibold text-gray-900 dark:text-neutral-100">{formatNumber(data.count || 0)}</span>
         </p>
-        <p className="text-neutral-400">
-          Acumulado: <span className="font-semibold text-neutral-100">{(data.cumulative || 0).toFixed(1)}%</span>
+        <p className="text-gray-500 dark:text-neutral-400">
+          Acumulado: <span className="font-semibold text-gray-900 dark:text-neutral-100">{(data.cumulative || 0).toFixed(1)}%</span>
         </p>
       </div>
     </div>
@@ -39,7 +39,7 @@ export default function AtendimentosParetoChart({ data, isPrint = false }) {
   const isAnimationActive = !isPrint;
   if (!data?.length) {
     return (
-      <div className="flex items-center justify-center h-64 text-neutral-500 text-sm">
+      <div className="flex items-center justify-center h-64 text-gray-400 dark:text-neutral-500 text-sm">
         Sem dados de descarte para o período
       </div>
     );
@@ -58,7 +58,7 @@ export default function AtendimentosParetoChart({ data, isPrint = false }) {
         <XAxis
           dataKey="reason"
           tick={{ fontSize: 10, fill: 'currentColor' }}
-          className="text-neutral-500"
+          className="text-gray-400 dark:text-neutral-500"
           axisLine={false}
           tickLine={false}
           interval={0}
@@ -69,7 +69,7 @@ export default function AtendimentosParetoChart({ data, isPrint = false }) {
         <YAxis
           yAxisId="left"
           tick={{ fontSize: 11, fill: 'currentColor' }}
-          className="text-neutral-500"
+          className="text-gray-400 dark:text-neutral-500"
           axisLine={false}
           tickLine={false}
           allowDecimals={false}
@@ -78,7 +78,7 @@ export default function AtendimentosParetoChart({ data, isPrint = false }) {
           yAxisId="right"
           orientation="right"
           tick={{ fontSize: 11, fill: 'currentColor' }}
-          className="text-neutral-500"
+          className="text-gray-400 dark:text-neutral-500"
           axisLine={false}
           tickLine={false}
           domain={[0, 100]}

@@ -9,24 +9,24 @@ import PropertiesScoreChart from './Charts/PropertiesScoreChart';
 
 function StatCard({ title, value, subtitle }) {
   return (
-    <div className="bg-neutral-900 rounded-xl border border-neutral-800 p-5 shadow-[0_0_0_1px_rgba(24,24,27,0.6)]">
-      <p className="text-xs font-medium text-red-300 uppercase tracking-wide mb-1">
+    <div className="bg-white dark:bg-neutral-900 rounded-xl border border-gray-200 dark:border-neutral-800 p-5 shadow-sm dark:shadow-[0_0_0_1px_rgba(24,24,27,0.6)]">
+      <p className="text-xs font-medium text-red-600 dark:text-red-300 uppercase tracking-wide mb-1">
         {title}
       </p>
-      <p className="text-2xl font-bold text-neutral-100 leading-tight">
+      <p className="text-2xl font-bold text-gray-900 dark:text-neutral-100 leading-tight">
         {value}
       </p>
-      {subtitle && <p className="text-xs text-neutral-400 mt-1">{subtitle}</p>}
+      {subtitle && <p className="text-xs text-gray-500 dark:text-neutral-400 mt-1">{subtitle}</p>}
     </div>
   );
 }
 
 function SectionCard({ title, subtitle, children }) {
   return (
-    <div className="bg-neutral-900 rounded-xl border border-neutral-800 p-5 shadow-[0_0_0_1px_rgba(24,24,27,0.6)]">
+    <div className="bg-white dark:bg-neutral-900 rounded-xl border border-gray-200 dark:border-neutral-800 p-5 shadow-sm dark:shadow-[0_0_0_1px_rgba(24,24,27,0.6)]">
       <div className="mb-4">
-        <h3 className="text-sm font-semibold text-neutral-100">{title}</h3>
-        {subtitle && <p className="text-xs text-neutral-400 mt-0.5">{subtitle}</p>}
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-neutral-100">{title}</h3>
+        {subtitle && <p className="text-xs text-gray-500 dark:text-neutral-400 mt-0.5">{subtitle}</p>}
       </div>
       {children}
     </div>
@@ -49,14 +49,14 @@ function PropertiesSection({ title, data, kpis, isPrint }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-semibold text-neutral-100">{title}</h2>
-        <span className="text-xs text-neutral-500">
+        <h2 className="text-base font-semibold text-gray-900 dark:text-neutral-100">{title}</h2>
+        <span className="text-xs text-gray-400 dark:text-neutral-500">
           {data.length > 0 ? `${formatNumber(data.length)} imóveis` : 'Sem dados carregados'}
         </span>
       </div>
 
       {data.length === 0 ? (
-        <div className="bg-neutral-900 rounded-xl border border-neutral-800 p-5 text-sm text-neutral-500">
+        <div className="bg-white dark:bg-neutral-900 rounded-xl border border-gray-200 dark:border-neutral-800 p-5 text-sm text-gray-400 dark:text-neutral-500">
           Importe a planilha de {title.toLowerCase()} para visualizar os indicadores.
         </div>
       ) : (

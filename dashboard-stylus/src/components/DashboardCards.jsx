@@ -4,18 +4,18 @@ import { formatCurrency, formatPercent, formatNumber } from '../utils/metrics';
 
 function KpiCard({ icon, title, value, sub, subLabel, accent = 'blue', badge }) {
   const accents = {
-    blue: 'bg-neutral-800 text-sky-300',
-    green: 'bg-neutral-800 text-emerald-300',
-    indigo: 'bg-neutral-800 text-indigo-300',
-    teal: 'bg-neutral-800 text-teal-300',
-    orange: 'bg-neutral-800 text-orange-300',
-    red: 'bg-neutral-800 text-red-300',
-    purple: 'bg-neutral-800 text-purple-300',
-    slate: 'bg-neutral-800 text-neutral-300',
+    blue: 'bg-blue-50 dark:bg-neutral-800 text-sky-600 dark:text-sky-300',
+    green: 'bg-emerald-50 dark:bg-neutral-800 text-emerald-600 dark:text-emerald-300',
+    indigo: 'bg-indigo-50 dark:bg-neutral-800 text-indigo-600 dark:text-indigo-300',
+    teal: 'bg-teal-50 dark:bg-neutral-800 text-teal-600 dark:text-teal-300',
+    orange: 'bg-orange-50 dark:bg-neutral-800 text-orange-600 dark:text-orange-300',
+    red: 'bg-red-50 dark:bg-neutral-800 text-red-600 dark:text-red-300',
+    purple: 'bg-purple-50 dark:bg-neutral-800 text-purple-600 dark:text-purple-300',
+    slate: 'bg-gray-100 dark:bg-neutral-800 text-gray-600 dark:text-neutral-300',
   };
 
   return (
-    <div className="bg-neutral-900 rounded-xl border border-neutral-800 p-5 flex flex-col gap-3 shadow-[0_0_0_1px_rgba(24,24,27,0.6)] hover:shadow-[0_0_0_1px_rgba(63,63,70,0.8)] transition-shadow">
+    <div className="bg-white dark:bg-neutral-900 rounded-xl border border-gray-200 dark:border-neutral-800 p-5 flex flex-col gap-3 shadow-sm dark:shadow-[0_0_0_1px_rgba(24,24,27,0.6)] hover:shadow-md dark:hover:shadow-[0_0_0_1px_rgba(63,63,70,0.8)] transition-shadow">
       <div className="flex items-start justify-between">
         <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${accents[accent]}`}>
           {icon}
@@ -28,14 +28,14 @@ function KpiCard({ icon, title, value, sub, subLabel, accent = 'blue', badge }) 
       </div>
 
       <div>
-        <p className="text-xs font-medium text-red-300 uppercase tracking-wide mb-1">
+        <p className="text-xs font-medium text-red-600 dark:text-red-300 uppercase tracking-wide mb-1">
           {title}
         </p>
-        <p className="text-2xl font-bold text-neutral-100 leading-tight">
+        <p className="text-2xl font-bold text-gray-900 dark:text-neutral-100 leading-tight">
           {value}
         </p>
         {sub && (
-          <p className="text-xs text-neutral-400 mt-1">
+          <p className="text-xs text-gray-500 dark:text-neutral-400 mt-1">
             {subLabel && <span className="font-medium">{subLabel}: </span>}
             {sub}
           </p>
@@ -51,32 +51,32 @@ function GuaranteeCard({ title, count, percent, value, accent, icon }) {
   const bars = {
     blue: 'bg-sky-400',
     purple: 'bg-purple-400',
-    slate: 'bg-neutral-600',
+    slate: 'bg-neutral-400 dark:bg-neutral-600',
   };
 
   return (
-    <div className="bg-neutral-900 rounded-xl border border-neutral-800 p-5 shadow-[0_0_0_1px_rgba(24,24,27,0.6)]">
+    <div className="bg-white dark:bg-neutral-900 rounded-xl border border-gray-200 dark:border-neutral-800 p-5 shadow-sm dark:shadow-[0_0_0_1px_rgba(24,24,27,0.6)]">
       <div className="flex items-center gap-2 mb-3">
         <span className="text-lg">{icon}</span>
-        <p className="text-xs font-medium text-red-300 uppercase tracking-wide">
+        <p className="text-xs font-medium text-red-600 dark:text-red-300 uppercase tracking-wide">
           {title}
         </p>
       </div>
       <div className="flex items-end justify-between mb-2">
-        <span className="text-2xl font-bold text-neutral-100">{count}</span>
-        <span className="text-sm font-semibold text-neutral-400">
+        <span className="text-2xl font-bold text-gray-900 dark:text-neutral-100">{count}</span>
+        <span className="text-sm font-semibold text-gray-500 dark:text-neutral-400">
           {formatPercent(percent)}
         </span>
       </div>
       {/* Barra de progresso */}
-      <div className="w-full bg-neutral-800 rounded-full h-1.5 mb-2">
+      <div className="w-full bg-gray-200 dark:bg-neutral-800 rounded-full h-1.5 mb-2">
         <div
           className={`h-1.5 rounded-full transition-all duration-500 ${bars[accent] || bars.blue}`}
           style={{ width: `${Math.min(percent, 100)}%` }}
         />
       </div>
       {value > 0 && (
-        <p className="text-xs text-neutral-400">
+        <p className="text-xs text-gray-500 dark:text-neutral-400">
           Valor: <span className="font-medium">{formatCurrency(value)}</span>
         </p>
       )}

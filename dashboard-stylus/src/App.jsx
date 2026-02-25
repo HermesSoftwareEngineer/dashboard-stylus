@@ -4,7 +4,11 @@ import Dashboard from './pages/Dashboard';
 import PrintView from './pages/PrintView';
 
 function App() {
-  const isDark = true;
+  const [isDark, setIsDark] = useState(() => {
+    const saved = localStorage.getItem('theme');
+    // Default to light mode
+    return saved === 'dark';
+  });
   const [view, setView] = useState('dashboard');
 
   useEffect(() => {
@@ -19,9 +23,15 @@ function App() {
     }
   }, [isDark]);
 
+  const toggleTheme = () => setIsDark((prev) => !prev);
+
   return (
     <ContractsProvider>
-      {view === 'print' ? <PrintView /> : <Dashboard />}
+      {view === 'print' ? (
+        <PrintView />
+      ) : (
+        <Dashboard isDark={isDark} toggleTheme={toggleTheme} />
+      )}
     </ContractsProvider>
   );
 }
