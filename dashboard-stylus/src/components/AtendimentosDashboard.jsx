@@ -1,13 +1,51 @@
 import { useMemo } from 'react';
+import { addDays, addWeeks, addMonths, addQuarters, addYears, differenceInCalendarDays } from 'date-fns';
 import { useContracts } from '../context/ContractsContext';
 import { useAtendimentosData } from '../hooks/useAtendimentosData';
-import { formatNumber, formatPercent, computeMonthlyData } from '../utils/metrics';
+import { formatNumber, formatPercent, computeMonthlyData, parseContractDate } from '../utils/metrics';
 import { getDateRange } from '../utils/dateRange';
 import AtendimentosUpload from './AtendimentosUpload';
 import AtendimentosFunnelChart from './Charts/AtendimentosFunnelChart';
 import AtendimentosOriginChart from './Charts/AtendimentosOriginChart';
 import AtendimentosParetoChart from './Charts/AtendimentosParetoChart';
 import AtendimentosTimelineChart from './Charts/AtendimentosTimelineChart';
+
+function resolveTimelineGranularity(startDate, endDate, requested = 'auto') {
+  if (requested && requested !== 'auto') return requested;
+  if (!startDate || !endDate) return 'month';
+
+  const days = Math.abs(differenceInCalendarDays(endDate, startDate));
+  if (days <= 31) return 'day';
+  if (days <= 120) return 'week';
+  if (days <= 730) return 'month';
+  if (days <= 1825) return 'quarter';
+  return 'year';
+}
+
+function getBucketInterval(date, granularity) {
+  const start = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+  switch (granularity) {
+    case 'day':
+      return { start, end: addDays(start, 1) };
+    case 'week':
+      return { start, end: addWeeks(start, 1) };
+    case 'quarter':
+      return { start, end: addQuarters(start, 1) };
+    case 'year':
+      return { start, end: addYears(start, 1) };
+    case 'month':
+    default:
+      return { start, end: addMonths(start, 1) };
+  }
+}
+
+function getAtendimentoDate(item) {
+  return (
+    parseContractDate(item.DataHoraInclusao)
+    || parseContractDate(item.DataHoraUltimaInteracao)
+  );
+}
 
 function StatCard({ title, value, subtitle }) {
   return (
@@ -122,6 +160,50 @@ export default function AtendimentosDashboard({ isPrint = false, onOpenDetails }
     });
   }, [timeline, contracts, hasContracts, atendimentosFilter]);
 
+  const handleTimelinePointClick = (bucket) => {
+    if (!onOpenDetails) return;
+
+    const { startDate, endDate } = getDateRange(atendimentosFilter);
+    const granularity = resolveTimelineGranularity(
+      startDate,
+      endDate,
+      atendimentosFilter?.granularity || 'auto'
+    );
+
+    if (!bucket?.date) {
+      onOpenDetails({
+        type: 'atendimentos',
+        title: 'Atendimentos',
+        rows: metrics?.filtered || [...atendimentosRent, ...atendimentosSale],
+      });
+      return;
+    }
+
+    const bucketDate = new Date(bucket.date);
+    if (Number.isNaN(bucketDate.getTime())) {
+      onOpenDetails({
+        type: 'atendimentos',
+        title: 'Atendimentos',
+        rows: metrics?.filtered || [...atendimentosRent, ...atendimentosSale],
+      });
+      return;
+    }
+
+    const { start, end } = getBucketInterval(bucketDate, granularity);
+    const source = metrics?.filtered || [...atendimentosRent, ...atendimentosSale];
+    const rows = source.filter((item) => {
+      const d = getAtendimentoDate(item);
+      if (!d) return false;
+      return d >= start && d < end;
+    });
+
+    onOpenDetails({
+      type: 'atendimentos',
+      title: 'Atendimentos',
+      rows,
+    });
+  };
+
   return (
     <div className="space-y-6">
       {!isPrint && <AtendimentosUpload showRent={!hasRent} showSale={!hasSale} />}
@@ -173,19 +255,7 @@ export default function AtendimentosDashboard({ isPrint = false, onOpenDetails }
           data={mergedTimeline}
           showContracts={hasContracts}
           isPrint={isPrint}
-          onChartClick={
-            onOpenDetails
-              ? () =>
-                  onOpenDetails({
-                    type: 'atendimentos',
-                    title: 'Atendimentos',
-                    rows: metrics?.filtered || [
-                      ...atendimentosRent,
-                      ...atendimentosSale,
-                    ],
-                  })
-              : undefined
-          }
+          onPointClick={handleTimelinePointClick}
         />
       </SectionCard>
 

@@ -36,7 +36,7 @@ export default function AtendimentosTimelineChart({
   data,
   showContracts = false,
   isPrint = false,
-  onChartClick,
+  onPointClick,
 }) {
   const isAnimationActive = !isPrint;
   if (!data?.length) {
@@ -47,13 +47,21 @@ export default function AtendimentosTimelineChart({
     );
   }
 
+  const handleClick = (state) => {
+    if (!onPointClick) return;
+    const payload = state?.activePayload?.[0]?.payload;
+    if (!payload) return;
+    onPointClick(payload);
+  };
+
   return (
     <ResponsiveContainer width="100%" height={300}>
       <ComposedChart
         data={data}
         margin={{ top: 5, right: 20, left: -10, bottom: 5 }}
-        onClick={() => {
-          if (!isPrint && onChartClick) onChartClick();
+        onClick={(state) => {
+          if (isPrint || !onPointClick) return;
+          handleClick(state);
         }}
       >
         <defs>
