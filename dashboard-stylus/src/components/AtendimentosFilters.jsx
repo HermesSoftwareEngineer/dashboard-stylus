@@ -15,6 +15,15 @@ const PERIODS = [
   { value: 'custom', label: 'Personalizado' },
 ];
 
+const GRANULARITIES = [
+  { value: 'auto', label: 'Automático' },
+  { value: 'day', label: 'Diário' },
+  { value: 'week', label: 'Semanal' },
+  { value: 'month', label: 'Mensal' },
+  { value: 'quarter', label: 'Trimestral' },
+  { value: 'year', label: 'Anual' },
+];
+
 function decodeHtml(value) {
   if (value == null) return '';
   const str = String(value);
@@ -49,6 +58,10 @@ export default function AtendimentosFilters() {
 
   const handlePurpose = (value) => {
     updateAtendimentosFilter({ purpose: value });
+  };
+
+  const handleGranularity = (value) => {
+    updateAtendimentosFilter({ granularity: value });
   };
 
   return (
@@ -96,6 +109,21 @@ export default function AtendimentosFilters() {
           <option value="todos">Todos</option>
           <option value="aluguel">Aluguel</option>
           <option value="venda">Venda</option>
+        </select>
+
+        <label className="text-xs uppercase tracking-wide text-red-300 font-semibold ml-2">
+          Granularidade
+        </label>
+        <select
+          value={atendimentosFilter.granularity || 'auto'}
+          onChange={(e) => handleGranularity(e.target.value)}
+          className="px-3 py-2 text-xs rounded-lg border border-neutral-800 bg-neutral-950 text-neutral-100 focus:outline-none focus:ring-2 focus:ring-neutral-600"
+        >
+          {GRANULARITIES.map((g) => (
+            <option key={g.value} value={g.value}>
+              {g.label}
+            </option>
+          ))}
         </select>
       </div>
 

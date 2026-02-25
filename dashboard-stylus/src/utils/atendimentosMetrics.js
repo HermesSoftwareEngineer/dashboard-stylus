@@ -1,5 +1,23 @@
-import { isWithinInterval } from 'date-fns';
+import {
+  addDays,
+  addMonths,
+  addQuarters,
+  addWeeks,
+  addYears,
+  differenceInCalendarDays,
+  format,
+  getQuarter,
+  isWithinInterval,
+  startOfDay,
+  startOfMonth,
+  startOfQuarter,
+  startOfWeek,
+  startOfYear,
+} from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { parseContractDate } from './metrics';
+
+const WEEK_OPTIONS = { locale: ptBR };
 
 function decodeHtml(value) {
   if (value == null) return '';
@@ -33,6 +51,129 @@ function isInRange(date, startDate, endDate) {
 
 function parseDate(value) {
   return parseContractDate(value);
+}
+
+function resolveGranularity(startDate, endDate, requested = 'auto') {
+  if (requested && requested !== 'auto') return requested;
+  if (!startDate || !endDate) return 'month';
+
+  const days = Math.abs(differenceInCalendarDays(endDate, startDate));
+  if (days <= 31) return 'day';
+  if (days <= 120) return 'week';
+  if (days <= 730) return 'month';
+  if (days <= 1825) return 'quarter';
+  return 'year';
+}
+
+function getBucketStart(date, granularity) {
+  switch (granularity) {
+    case 'day':
+      return startOfDay(date);
+    case 'week':
+      return startOfWeek(date, WEEK_OPTIONS);
+    case 'month':
+      return startOfMonth(date);
+    case 'quarter':
+      return startOfQuarter(date);
+    case 'year':
+      return startOfYear(date);
+    default:
+      return startOfMonth(date);
+  }
+}
+
+function getBucketKey(date, granularity) {
+  switch (granularity) {
+    case 'day':
+      return format(date, 'yyyy-MM-dd');
+    case 'week':
+      return format(date, "yyyy-'W'ww");
+    case 'month':
+      return format(date, 'yyyy-MM');
+    case 'quarter':
+      return `${format(date, 'yyyy')}-Q${getQuarter(date)}`;
+    case 'year':
+      return format(date, 'yyyy');
+    default:
+      return format(date, 'yyyy-MM');
+  }
+}
+
+function getBucketLabel(date, granularity) {
+  switch (granularity) {
+    case 'day':
+      return format(date, 'dd/MM');
+    case 'week':
+      return format(date, 'dd/MM');
+    case 'month':
+      return format(date, 'MMM yyyy', { locale: ptBR });
+    case 'quarter':
+      return `T${getQuarter(date)} ${format(date, 'yyyy')}`;
+    case 'year':
+      return format(date, 'yyyy');
+    default:
+      return format(date, 'MMM yyyy', { locale: ptBR });
+  }
+}
+
+function getNextDate(date, granularity) {
+  switch (granularity) {
+    case 'day':
+      return addDays(date, 1);
+    case 'week':
+      return addWeeks(date, 1);
+    case 'month':
+      return addMonths(date, 1);
+    case 'quarter':
+      return addQuarters(date, 1);
+    case 'year':
+      return addYears(date, 1);
+    default:
+      return addMonths(date, 1);
+  }
+}
+
+function buildTimeline(items, startDate, endDate, granularity, collaboratorFilter = 'todos') {
+  const counts = new Map();
+
+  items.forEach((item) => {
+    const date = parseDate(item.DataHoraInclusao) || parseDate(item.DataHoraUltimaInteracao);
+    if (!isInRange(date, startDate, endDate)) return;
+
+    if (collaboratorFilter !== 'todos') {
+      const collaborator = formatCollaborator(item.Corretor);
+      if (collaborator !== collaboratorFilter) return;
+    }
+
+    const bucketStart = getBucketStart(date, granularity);
+    const key = getBucketKey(bucketStart, granularity);
+    const entry = counts.get(key) || {
+      key,
+      date: bucketStart,
+      label: getBucketLabel(bucketStart, granularity),
+      value: 0,
+    };
+    entry.value += 1;
+    counts.set(key, entry);
+  });
+
+  if (startDate && endDate) {
+    const startBucket = getBucketStart(startDate, granularity);
+    const endBucket = getBucketStart(endDate, granularity);
+    for (let current = startBucket; current <= endBucket; current = getNextDate(current, granularity)) {
+      const key = getBucketKey(current, granularity);
+      if (!counts.has(key)) {
+        counts.set(key, {
+          key,
+          date: current,
+          label: getBucketLabel(current, granularity),
+          value: 0,
+        });
+      }
+    }
+  }
+
+  return Array.from(counts.values()).sort((a, b) => a.date - b.date);
 }
 
 function extractIds(value) {
@@ -231,4 +372,25 @@ export function computeAtendimentosMetrics(items, startDate, endDate, filter) {
     topImoveis: buildTopImoveis(filtered),
     paretoData,
   };
+}
+
+export function computeAtendimentosTimeline(rentItems, saleItems, startDate, endDate, filter) {
+  const granularity = resolveGranularity(startDate, endDate, filter?.granularity || 'auto');
+  const collaboratorFilter = filter?.collaborator || 'todos';
+  const purposeFilter = filter?.purpose || 'todos';
+
+  const sourceItems = purposeFilter === 'aluguel'
+    ? rentItems
+    : purposeFilter === 'venda'
+      ? saleItems
+      : [...rentItems, ...saleItems];
+
+  const series = buildTimeline(sourceItems, startDate, endDate, granularity, collaboratorFilter);
+
+  return series.map((entry) => ({
+    key: entry.key,
+    date: entry.date,
+    label: entry.label,
+    total: entry.value,
+  }));
 }

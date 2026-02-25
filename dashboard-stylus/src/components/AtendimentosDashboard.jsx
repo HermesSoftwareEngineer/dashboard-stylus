@@ -6,6 +6,7 @@ import AtendimentosUpload from './AtendimentosUpload';
 import AtendimentosFunnelChart from './Charts/AtendimentosFunnelChart';
 import AtendimentosOriginChart from './Charts/AtendimentosOriginChart';
 import AtendimentosParetoChart from './Charts/AtendimentosParetoChart';
+import AtendimentosTimelineChart from './Charts/AtendimentosTimelineChart';
 
 function StatCard({ title, value, subtitle }) {
   return (
@@ -55,7 +56,7 @@ function formatAddress(item) {
 
 export default function AtendimentosDashboard({ isPrint = false }) {
   const { atendimentosRent, atendimentosSale, propertiesRent, propertiesSale } = useContracts();
-  const { metrics } = useAtendimentosData();
+  const { metrics, timeline } = useAtendimentosData();
 
   const hasRent = atendimentosRent.length > 0;
   const hasSale = atendimentosSale.length > 0;
@@ -97,6 +98,13 @@ export default function AtendimentosDashboard({ isPrint = false }) {
         subtitle="Leads, qualificados, visitas, propostas e fechamentos"
       >
         <AtendimentosFunnelChart data={metrics.funnelStages} isPrint={isPrint} />
+      </SectionCard>
+
+      <SectionCard
+        title="Evolução de novos atendimentos"
+        subtitle="Comparativo entre aluguel e venda"
+      >
+        <AtendimentosTimelineChart data={timeline} isPrint={isPrint} />
       </SectionCard>
 
       <SectionCard

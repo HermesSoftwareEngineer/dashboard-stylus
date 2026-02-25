@@ -106,7 +106,7 @@ export default function ImoveisDashboard({ isPrint = false }) {
   const hasSale = propertiesSale.length > 0;
 
   const rentKpis = useMemo(
-    () => computePropertyKPIs(propertiesRent, startDate, endDate),
+    () => computePropertyKPIs(propertiesRent, startDate, endDate, { advertisedOnly: true }),
     [propertiesRent, startDate, endDate]
   );
   const saleKpis = useMemo(

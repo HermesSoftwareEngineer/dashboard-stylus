@@ -1,6 +1,7 @@
 import {
   ComposedChart,
   Bar,
+  Area,
   Line,
   XAxis,
   YAxis,
@@ -9,6 +10,8 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { formatNumber } from '../../utils/metrics';
+
+const conversionGradientId = 'conversionGradient';
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
@@ -45,6 +48,12 @@ export default function AtendimentosOriginChart({ data, isPrint = false }) {
   return (
     <ResponsiveContainer width="100%" height={280}>
       <ComposedChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+        <defs>
+          <linearGradient id={conversionGradientId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.25} />
+            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.02} />
+          </linearGradient>
+        </defs>
         <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="opacity-10" />
         <XAxis
           dataKey="channel"
@@ -78,6 +87,15 @@ export default function AtendimentosOriginChart({ data, isPrint = false }) {
           name="Leads"
           fill="#22c55e"
           radius={[6, 6, 0, 0]}
+          isAnimationActive={isAnimationActive}
+        />
+        <Area
+          yAxisId="right"
+          type="monotone"
+          dataKey="conversion"
+          name="Conversão"
+          stroke="none"
+          fill={`url(#${conversionGradientId})`}
           isAnimationActive={isAnimationActive}
         />
         <Line

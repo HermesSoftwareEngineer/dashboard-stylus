@@ -19,6 +19,7 @@ const defaultAtendimentosFilter = {
   period: 'this_month',
   startDate: '',
   endDate: '',
+  granularity: 'auto',
   collaborator: 'todos',
   purpose: 'todos',
 };

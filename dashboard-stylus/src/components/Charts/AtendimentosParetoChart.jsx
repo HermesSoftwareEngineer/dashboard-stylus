@@ -1,6 +1,7 @@
 import {
   ComposedChart,
   Bar,
+  Area,
   Line,
   XAxis,
   YAxis,
@@ -9,6 +10,8 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { formatNumber } from '../../utils/metrics';
+
+const cumulativeGradientId = 'cumulativeGradient';
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
@@ -45,6 +48,12 @@ export default function AtendimentosParetoChart({ data, isPrint = false }) {
   return (
     <ResponsiveContainer width="100%" height={280}>
       <ComposedChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+        <defs>
+          <linearGradient id={cumulativeGradientId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor="#ef4444" stopOpacity={0.25} />
+            <stop offset="95%" stopColor="#ef4444" stopOpacity={0.02} />
+          </linearGradient>
+        </defs>
         <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="opacity-10" />
         <XAxis
           dataKey="reason"
@@ -82,6 +91,15 @@ export default function AtendimentosParetoChart({ data, isPrint = false }) {
           name="Ocorrências"
           fill="#f59e0b"
           radius={[6, 6, 0, 0]}
+          isAnimationActive={isAnimationActive}
+        />
+        <Area
+          yAxisId="right"
+          type="monotone"
+          dataKey="cumulative"
+          name="Acumulado"
+          stroke="none"
+          fill={`url(#${cumulativeGradientId})`}
           isAnimationActive={isAnimationActive}
         />
         <Line

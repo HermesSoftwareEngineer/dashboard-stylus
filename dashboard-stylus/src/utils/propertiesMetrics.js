@@ -43,6 +43,32 @@ function normalizeDestination(value) {
   return null;
 }
 
+function normalizeText(value) {
+  return String(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+}
+
+function isAdvertisedProperty(item) {
+  const raw = normalizeText(
+    item.Situacao
+      ?? item.Situação
+      ?? item.Status
+      ?? item.SituacaoImovel
+      ?? item.SituacaoImóvel
+      ?? item.StatusImovel
+      ?? item.StatusImóvel
+  );
+
+  if (!raw) return false;
+  if (raw.includes('indisponivel')) return false;
+  if (raw.includes('em desocupacao')) return true;
+  if (raw.includes('vago') || raw.includes('disponivel')) return true;
+  return false;
+}
+
 function parseScore(value) {
   if (value === null || value === undefined || value === '') return 0;
   if (typeof value === 'number') return isNaN(value) ? 0 : value;
@@ -51,7 +77,9 @@ function parseScore(value) {
   return isNaN(num) ? 0 : num;
 }
 
-export function computePropertyKPIs(items, startDate, endDate) {
+export function computePropertyKPIs(items, startDate, endDate, options = {}) {
+  const { advertisedOnly = false } = options;
+
   const filtered = (!startDate && !endDate)
     ? items
     : items.filter((item) => {
@@ -62,8 +90,12 @@ export function computePropertyKPIs(items, startDate, endDate) {
       return isInRange(date, startDate, endDate);
     });
 
-  const total = filtered.length;
-  const vgvTotal = filtered.reduce((sum, item) => sum + parseValue(item.Valor), 0);
+  const filteredByStatus = advertisedOnly
+    ? filtered.filter(isAdvertisedProperty)
+    : filtered;
+
+  const total = filteredByStatus.length;
+  const vgvTotal = filteredByStatus.reduce((sum, item) => sum + parseValue(item.Valor), 0);
 
   const destination = {
     Residencial: 0,
@@ -71,7 +103,7 @@ export function computePropertyKPIs(items, startDate, endDate) {
     Misto: 0,
   };
 
-  filtered.forEach((item) => {
+  filteredByStatus.forEach((item) => {
     const dest = normalizeDestination(item.Destinacao);
     if (dest && destination[dest] !== undefined) destination[dest] += 1;
   });
@@ -83,7 +115,7 @@ export function computePropertyKPIs(items, startDate, endDate) {
     muitoBom: 0,
   };
 
-  filtered.forEach((item) => {
+  filteredByStatus.forEach((item) => {
     const score = parseScore(item.Pontuacao);
     if (score < 50) scoreBands.incompleto += 1;
     else if (score < 70) scoreBands.medio += 1;
